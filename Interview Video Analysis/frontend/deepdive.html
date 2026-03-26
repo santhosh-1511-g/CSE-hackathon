@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidate Deep-Dive | ProctorShield</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#141E2F',
+                            900: '#0f172a',
+                            950: '#020617',
+                        },
+                        brand: {
+                            danger: '#f43f5e', // Rose-500
+                            success: '#10b981', // Emerald-500
+                            warning: '#f59e0b', // Amber-500
+                            accent: '#6366f1'   // Indigo-500
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif;}
+        .score-ring { transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1); }
+    </style>
+</head>
+<body class="bg-slate-900 min-h-screen">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- Lucide SVG Components ---
+        const AlertTriangle = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        );
+        const ShieldCheck = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        );
+        const LaptopIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"/></svg>
+        );
+        const UserCheck = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
+        );
+
+        // --- UI Components ---
+        const Gauge = ({ value, max, label, colorClass, icon }) => {
+            const radius = 36;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - (value / max) * circumference;
+            const strokeColor = colorClass.includes('danger') ? '#f43f5e' : colorClass.includes('success') ? '#10b981' : colorClass.includes('warning') ? '#f59e0b' : '#6366f1';
+
+            return (
+                <div className="flex flex-col items-center bg-slate-850 p-6 rounded-2xl border border-slate-800 shadow-xl w-full">
+                    <div className={`mb-3 ${colorClass}`}>{icon}</div>
+                    <div className="relative w-24 h-24 flex items-center justify-center">
+                        <svg className="transform -rotate-90 w-24 h-24">
+                            <circle cx="48" cy="48" r={radius} stroke="#1e293b" strokeWidth="8" fill="transparent" />
+                            <circle 
+                                cx="48" cy="48" r={radius} 
+                                stroke={strokeColor} 
+                                strokeWidth="8" 
+                                fill="transparent" 
+                                strokeDasharray={circumference} 
+                                strokeDashoffset={offset} 
+                                className="score-ring"
+                                strokeLinecap="round"
+                            />
+                        </svg>
+                        <div className="absolute flex flex-col items-center justify-center">
+                            <span className="text-2xl font-bold text-slate-100">{value}</span>
+                        </div>
+                    </div>
+                    <span className="mt-4 font-semibold text-slate-400 tracking-wider text-xs uppercase">{label}</span>
+                </div>
+            );
+        };
+
+        const Dashboard = () => {
+            const [data, setData] = useState(null);
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState(null);
+            const [traceId, setTraceId] = useState("");
+
+            useEffect(() => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const id = urlParams.get('id');
+                if (!id) {
+                    setError("No Candidate ID provided.");
+                    setLoading(false);
+                    return;
+                }
+                setTraceId(id);
+
+                const fetchReport = async () => {
+                    try {
+                        const response = await fetch(`http://127.0.0.1:5000/api/report/${id}`);
+                        if (!response.ok) {
+                            const errorBody = await response.text();
+                            console.error("SERVER ERROR HTML DETECTED:", errorBody);
+                            alert(`Server Error (${response.status}). Check console for details.`);
+                            setLoading(false);
+                            return;
+                        }
+                        const json = await response.json();
+                        if (json.error) throw new Error(json.error);
+                        console.log("FULL CANDIDATE DATA:", json);
+                        setData(json);
+                        setLoading(false);
+                    } catch (err) {
+                        setError(err.message);
+                        setLoading(false);
+                    }
+                };
+
+                fetchReport();
+            }, []);
+
+            if (loading) return <div className="flex h-screen items-center justify-center text-xl text-slate-500 font-mono">Loading Neural Insights...</div>;
+            if (error) return <div className="flex h-screen items-center justify-center text-xl text-rose-500 font-mono">Error: {error}</div>;
+
+            const finalScore = data.final_score;
+            let statusColor = 'text-brand-success bg-emerald-950/40 border-emerald-900';
+            if (finalScore < 50) statusColor = 'text-brand-danger bg-rose-950/40 border-rose-900';
+            else if (finalScore < 80) statusColor = 'text-brand-warning bg-amber-950/40 border-amber-900';
+            
+            const timeline = data.gaze_timeline || [];
+            const transcript = data.raw_data?.transcript || "Transcript processing incomplete.";
+
+            return (
+                <div className="min-h-screen p-8 max-w-6xl mx-auto space-y-8">
+                    {/* Header */}
+                    <header className="flex justify-between items-end border-b border-slate-800 pb-6">
+                        <div>
+                            <h1 className="text-3xl font-extrabold text-slate-100 mb-1 border-l-4 border-emerald-500 pl-3">Performance Matrix</h1>
+                            <p className="text-slate-500 font-mono text-xs pl-4">TRACE ID: {traceId.toUpperCase()}</p>
+                        </div>
+                    </header>
+
+                    {/* TOP ROW: Gauges */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <Gauge value={Math.round(data.performance_breakdown?.technical || 0)} max={100} label="Technical Efficacy" colorClass="text-brand-accent" icon={<LaptopIcon/>} />
+                        <Gauge value={Math.round(data.integrity_index)} max={100} label="Integrity Index" colorClass={data.integrity_index < 50 ? 'text-brand-danger' : 'text-brand-success'} icon={data.integrity_index < 50 ? <AlertTriangle/> : <ShieldCheck/>} />
+                        <Gauge value={Math.round(finalScore)} max={100} label="Overall Fit" colorClass={finalScore < 50 ? 'text-brand-danger' : finalScore < 80 ? 'text-brand-warning' : 'text-brand-success'} icon={<UserCheck/>} />
+                    </div>
+
+                    {/* Dynamic Reasoning Box */}
+                    <div className={`p-6 rounded-2xl border ${statusColor} shadow-lg transition-colors duration-500`}>
+                        <h3 className="text-sm font-bold uppercase tracking-widest mb-2 flex items-center gap-2 opacity-80">
+                            Executive Summary
+                        </h3>
+                        <p className="text-lg font-medium tracking-wide">
+                            {data.executive_reasoning}
+                        </p>
+                    </div>
+
+                    {/* MIDDLE ROW: Gaze Timeline */}
+                    <div className="bg-slate-850 p-6 rounded-2xl border border-slate-800 shadow-lg">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                                Gaze Deviation Timeline
+                            </h3>
+                            <div className="flex gap-2">
+                                <span className="text-xs bg-slate-900 border border-slate-700 px-3 py-1 rounded-full text-slate-400 font-mono">
+                                    Avg Dev: {Math.round((timeline.reduce((a,b)=>a+b,0)/Math.max(1, timeline.length))*100)}%
+                                </span>
+                                <span className={`text-xs px-3 py-1 rounded-full font-mono border ${timeline.filter(v => v > 0.4).length > 2 ? 'bg-rose-950/50 border-rose-900 text-rose-400' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
+                                    Anomalies: {timeline.filter(v => v > 0.4).length}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="flex h-16 w-full gap-1 items-end bg-slate-900/50 p-2 rounded-lg border border-slate-800/50">
+                            {timeline.map((val, idx) => (
+                                <div key={idx} 
+                                     className={`flex-1 rounded-t-sm transition-all duration-300 ${val > 0.4 ? 'bg-rose-500' : 'bg-emerald-500'}`} 
+                                     style={{ height: `${Math.max(10, val * 100)}%`, opacity: val > 0.4 ? 0.9 : 0.6 }}
+                                     title={`Deviation: ${Math.round(val*100)}%`}>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex justify-between text-xs text-slate-500 mt-2 font-mono px-2">
+                            <span>00:00</span>
+                            <span>Session End</span>
+                        </div>
+                    </div>
+
+                    {/* Debug: Resume Alignment Section */}
+                    <div style={{ border: '5px solid magenta', margin: '10px', padding: '10px' }}>
+                        <h3 className="text-white font-bold mb-2">Debug: Resume Alignment Section</h3>
+                        {data?.resume_profile ? (
+                            <div className="text-emerald-400 text-xs font-mono whitespace-pre-wrap">
+                                RESUME_PROFILE FOUND: {JSON.stringify(data.resume_profile)}
+                            </div>
+                        ) : (
+                            <p style={{ color: 'red', fontWeight: 'bold' }}>RESUME_PROFILE DATA IS NULL OR UNDEFINED</p>
+                        )}
+                    </div>
+
+                    {/* Resume Alignment Card */}
+                    {data.skill_alignment && data.skill_alignment.length > 0 && (
+                        <div className="bg-slate-850 p-6 rounded-2xl border-4 border-magenta-500 shadow-lg">
+                            <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <ShieldCheck/> Resume vs. Interview Alignment
+                            </h3>
+                            <div className="flex flex-wrap gap-4">
+                                {data.skill_alignment.map((skill, i) => (
+                                    <div key={i} className="flex flex-col items-center bg-slate-900/50 p-4 rounded-xl border border-slate-800 min-w-[120px]">
+                                        <span className="text-slate-300 font-bold mb-2 capitalize">{skill.skill}</span>
+                                        <span className={`text-xs px-3 py-1 rounded-full font-bold ${skill.mentions >= 2 ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-900' : 'bg-amber-900/40 text-amber-400 border border-amber-900'}`}>
+                                            {skill.mentions >= 2 ? 'Verified' : 'Gap'}
+                                        </span>
+                                        <span className="text-[10px] text-slate-500 mt-1 font-mono">{skill.mentions} mentions</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* BOTTOM ROW: Details & Transcript */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Red Flags & Breakdown */}
+                        <div className="lg:col-span-1 space-y-6">
+                            <div className="bg-slate-850 p-6 rounded-2xl border border-slate-800 h-full">
+                                <h3 className="text-rose-500 font-bold text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <AlertTriangle/> Critical Warnings
+                                </h3>
+                                {!data.critical_warnings || data.critical_warnings.length === 0 ? (
+                                    <p className="text-slate-500 text-sm italic">No warnings detected during the session.</p>
+                                ) : (
+                                    <ul className="space-y-3">
+                                        {data.critical_warnings.map((warning, i) => (
+                                            <li key={i} className={`flex justify-between items-center text-xs p-3 rounded border border-slate-800/50 leading-relaxed font-medium ${warning.confidence >= 0.8 ? 'bg-emerald-900/30 text-emerald-200' : 'bg-rose-900/30 text-rose-200'}`}>
+                                                <span>{warning.tag || warning}</span>
+                                                <span className="font-mono bg-slate-900/40 px-2 py-0.5 rounded text-[10px] tracking-wide">
+                                                    {warning.confidence !== undefined ? (warning.confidence * 100).toFixed(0) : '100'}%
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                                
+                                <div className="mt-8 pt-6 border-t border-slate-800">
+                                    <h3 className="text-slate-400 font-bold text-xs uppercase tracking-widest mb-4">Neural Pillars</h3>
+                                    <div className="space-y-3 text-sm font-mono">
+                                        <div className="flex justify-between"><span className="text-slate-500">Soft Skills</span> <span className="text-emerald-400">{data.performance_breakdown?.soft_skills}%</span></div>
+                                        <div className="flex justify-between"><span className="text-slate-500">Communication</span> <span className="text-indigo-400">{data.performance_breakdown?.communication}%</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Transcript */}
+                        <div className="lg:col-span-2 bg-slate-850 p-6 rounded-2xl border border-slate-800">
+                            <h3 className="text-slate-300 font-bold text-xs uppercase tracking-widest mb-4">Live Transcription</h3>
+                            <div className="prose prose-invert max-w-none text-slate-400 font-serif leading-loose text-lg" 
+                                 dangerouslySetInnerHTML={{
+                                    __html: transcript
+                                        .replace(/facebook|spare time|girls/gi, match => `<span class="bg-rose-500/20 text-rose-400 border-b border-rose-500/50 pb-0.5 px-1">${match}</span>`)
+                                        .replace(/hardware|software|bsnl|technology|system|data|supervising/gi, match => `<span class="bg-emerald-500/20 text-emerald-400 border-b border-emerald-500/50 pb-0.5 px-1">${match}</span>`)
+                                 }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<Dashboard />);
+    </script>
+</body>
+</html>

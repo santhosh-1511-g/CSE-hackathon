@@ -42,6 +42,12 @@ async function uploadVideo() {
       body: formData,
     });
 
+    if (!response.ok) {
+        const errorBody = await response.text();
+        console.error("SERVER ERROR HTML DETECTED (UPLOAD):", errorBody);
+        throw new Error(`Upload Failed (${response.status})`);
+    }
+
     const data = await response.json();
     loader.style.display = "none";
 

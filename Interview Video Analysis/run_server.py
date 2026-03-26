@@ -36,7 +36,7 @@ if __name__ == "__main__":
     
     try:
         from server import app
-        app.run(debug=True, host='127.0.0.1', port=5000)
+        app.run(debug=True, host='127.0.0.1', port=5000, use_reloader=False)
     except ImportError as e:
         print(f"[ERROR] Import error: {e}")
         print(f"Python path: {sys.path}")

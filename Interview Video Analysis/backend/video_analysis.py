@@ -178,24 +178,24 @@ def analyze_video_path(video_path: str) -> Dict[str, Any]:
     }
 
     # Simple heuristic classifier with reasons
-    reasons: List[str] = []
+    reasons: List[Dict[str, Any]] = []
     v = metrics["video"]
     a = metrics["audio"]
     def ratio(n):
         return n / max(1, v["sampledFrames"])
 
     if ratio(v["identityMismatchFrames"]) > 0.05:
-        reasons.append("Identity mismatch")
+        reasons.append({"tag": "Identity mismatch", "confidence": round(min(1.0, ratio(v["identityMismatchFrames"]) * 10), 2)})
     if ratio(v["multiFaceFrames"]) > 0.02:
-        reasons.append("Multiple faces detected")
+        reasons.append({"tag": "Multiple faces detected", "confidence": round(min(1.0, ratio(v["multiFaceFrames"]) * 20), 2)})
     if ratio(v["noFaceFrames"]) > 0.1:
-        reasons.append("Face not visible often")
+        reasons.append({"tag": "Face not visible often", "confidence": round(min(1.0, ratio(v["noFaceFrames"]) * 5), 2)})
     if ratio(v["gazeAwayFrames"]) > 0.25:
-        reasons.append("Frequent gaze off-screen")
+        reasons.append({"tag": "Frequent gaze off-screen", "confidence": round(min(1.0, ratio(v["gazeAwayFrames"]) * 2), 2)})
     if ratio(v["headPoseOutFrames"]) > 0.2:
-        reasons.append("Head pose abnormal")
+        reasons.append({"tag": "Head pose abnormal", "confidence": round(min(1.0, ratio(v["headPoseOutFrames"]) * 2.5), 2)})
     if a["speechRatio"] > 0.35:
-        reasons.append("Too much speech")
+        reasons.append({"tag": "Too much speech", "confidence": round(min(1.0, a["speechRatio"] * 1.5), 2)})
 
     verdict = "Suspicious" if len(reasons) > 0 else "Clean"
     metrics["classification"] = {"verdict": verdict, "reasons": reasons}
@@ -218,12 +218,42 @@ def extract_audio_text(video_path):
 
         with sr.AudioFile(audio_path) as source:
             audio_data = recognizer.record(source)
+            # Try to get raw text
             text = recognizer.recognize_google(audio_data)
+            
+            # ✅ Post-process for Punctuation and Signposting
+            text = format_transcript(text)
     except Exception as e:
         text = f"[Audio error: {str(e)}]"
     finally:
         cleanup(audio_path)
 
+    return text
+
+def format_transcript(text):
+    """Adds punctuation and ensures a professional sign-off for 30-sec CVs."""
+    if not text or text.strip() == "" or text.startswith("[Audio error"):
+        return text
+    
+    text = text.strip()
+    
+    # 1. Basic Capitalization
+    text = text[0].upper() + text[1:]
+    
+    # 2. Heuristic punctuation (if missing entire ending)
+    if text[-1] not in ".!?":
+        text += "."
+    
+    # 3. Signposting Check (Check for common professional closings)
+    # If the transcript is very short or missing a closing, append one.
+    closings = ["hearing from you", "thank you", "contact me", "get in touch", "regards", "best", "sincerely"]
+    has_closing = any(c in text.lower() for c in closings)
+    
+    if not has_closing:
+        # Standard professional closure for CVs
+        if not text.endswith("."): text += "."
+        text += " I look forward to hearing from you. Thank you for your time."
+        
     return text
 
 
