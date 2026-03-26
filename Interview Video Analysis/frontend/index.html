@@ -1,77 +1,650 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ProctorVision - Exam Proctoring Analytics</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body class="bg-light text-dark">
-    <nav class="navbar navbar-light bg-white border-bottom shadow-sm px-4">
-      <span class="navbar-brand mb-0 h1 text-primary">ProctorVision</span>
-      <span class="badge bg-primary">Beta</span>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProctorShield Global | Neural Integrity Platform</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg-base: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-sidebar: #ffffff;
+      --border-accent: #e2e8f0;
+      --text-dim: #64748b;
+      --text-bright: #0f172a;
+      --accent-primary: #4f46e5; /* Indigo */
+      --accent-success: #10b981;
+      --accent-danger: #ef4444;
+      --accent-warning: #f59e0b;
+      --sidebar-width: 280px;
+      --radius-premium: 16px;
+      --shadow-premium: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      background: var(--bg-base);
+      color: var(--text-dim);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* MNC Premium Layout */
+    .app-shell { display: flex; height: 100vh; overflow:hidden; }
+    
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-accent);
+      display: flex; flex-direction: column;
+      padding: 32px 12px;
+    }
+
+    .brand-section { padding: 0 20px 32px; border-bottom: 1px solid var(--border-accent); margin-bottom: 32px; }
+    .brand-id { display:flex; align-items:center; gap:14px; font-weight:800; font-size:1.4rem; color:var(--text-bright); letter-spacing:-0.5px; }
+    .brand-dot { width: 12px; height: 12px; background: var(--accent-primary); border-radius: 4px; box-shadow: 0 0 15px rgba(79, 70, 229, 0.3); }
+
+    .nav-group { display: flex; flex-direction: column; gap: 4px; }
+    .nav-btn {
+      display: flex; align-items: center; gap: 14px; padding: 14px 20px;
+      color: var(--text-dim); text-decoration: none; border-radius: 12px;
+      font-weight: 500; font-size:0.95rem; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .nav-btn:hover { background: #f1f5f9; color: var(--text-bright); }
+    .nav-btn.active { 
+      background: #eff6ff; color: var(--accent-primary); 
+      box-shadow: inset 0 0 0 1px rgba(79, 70, 229, 0.1); 
+    }
+
+    /* Main Viewport */
+    .viewport { flex: 1; display: flex; flex-direction: column; background: #f8fafc; overflow-y: auto; }
+    .header-bar {
+      height: 80px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; border-bottom: 1px solid var(--border-accent); background: #ffffffa0; backdrop-filter: blur(10px);
+      position: sticky; top:0; z-index: 100;
+    }
+
+    .page-content { padding: 40px; }
+
+    /* Elegant Cards */
+    .m-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-accent); border-radius: var(--radius-premium);
+      padding: 32px; transition: all 0.3s;
+      box-shadow: var(--shadow-premium);
+    }
+    .m-card:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08); }
+
+    /* Live Monitor High-Tech View */
+    .scan-stage { 
+      position: relative; aspect-ratio: 16/9; background: #000; border-radius: 20px; 
+      overflow: hidden; border: 1px solid var(--border-accent);
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+    }
+    .video-feed { width:100%; height:100%; object-fit: contain; }
+    
+    .hud-overlay {
+      position: absolute; inset: 0; pointer-events: none; padding: 24px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      z-index: 10;
+    }
+    .hud-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .hud-badge { 
+      background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2);
+      padding: 6px 14px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #fff;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .hud-scanner { 
+      position: absolute; top:0; left:0; width:100%; height:2px; 
+      background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+      animation: scanAnim 3s infinite linear; display: none;
+    }
+    @keyframes scanAnim { 0% { top: 0; } 50% { top: 100%; } 100% { top: 0; } }
+
+    /* Forensic Console */
+    .console {
+      background: #fdfdfd; border-radius: 12px; padding: 20px; font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem; height: 160px; overflow-y: auto; color: #334155; border: 1px solid var(--border-accent);
+    }
+    .console-line { margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #f1f5f9; }
+    .console-ts { color: var(--text-dim); margin-right: 12px; font-weight: 600; }
+
+    /* MNC KPI Tiles */
+    .kpi-tile { border-left: 4px solid var(--accent-primary); padding-left: 20px; }
+    .kpi-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; color: var(--text-dim); }
+    .kpi-val { font-size: 2rem; font-weight: 700; color: var(--text-bright); letter-spacing: -1px; }
+
+    /* Verdict Refinement */
+    .verdict-box {
+      border-radius: 16px; padding: 24px; text-align: center; font-weight: 700;
+      letter-spacing: 1px; font-size: 1.2rem; transition: all 0.4s;
+    }
+    .v-pending { background: #f8fafc; color: var(--text-dim); border: 1px solid var(--border-accent); }
+    .v-clean { background: #ecfdf5; color: var(--accent-success); border: 1px solid #10b98140; }
+    .v-flag { background: #fef2f2; color: var(--accent-danger); border: 1px solid #ef444440; }
+
+    /* UI Table for Archive */
+    .m-table { width: 100%; border-spacing: 0; }
+    .m-table th { padding: 20px; font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); border-bottom: 1px solid var(--border-accent); letter-spacing: 1px; text-align: left; }
+    .m-table td { padding: 20px; color: var(--text-bright); font-size: 0.9rem; border-bottom: 1px solid var(--border-accent); }
+    .m-table tr:hover td { background: #f8fafc; }
+    .status-chip { padding: 6px 14px; border-radius: 100px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+
+    /* Silky Smooth View Transitions */
+    .m-view { opacity: 0; transition: opacity 0.4s ease, transform 0.4s ease; transform: translateY(10px); }
+    .m-view.active { opacity: 1; transform: translateY(0); display: block !important; }
+
+    #breadcrumb { letter-spacing: 2px; opacity: 0.5; transition: all 0.3s; color: var(--text-dim); font-weight: 700; }
+    #breadcrumb:hover { opacity: 1; color: var(--accent-primary); }
+
+    .pulse { animation: pulseAnim 2s infinite; }
+    @keyframes pulseAnim { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+    .btn-premium {
+      background: var(--accent-primary); color: #fff; border:none; padding: 12px 28px;
+      border-radius: 12px; font-weight: 600; font-size: 0.9rem; transition: all 0.2s;
+      box-shadow: 0 8px 15px -3px rgba(79, 70, 229, 0.3);
+    }
+    .btn-premium:hover { transform: translateY(-2px); box-shadow: 0 12px 20px -3px rgba(79, 70, 229, 0.4); filter: brightness(1.1); }
+
+    .modal-content { border: none !important; border-radius: 24px !important; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.2) !important; background: #fff !important; color: #1e293b !important; }
+    .modal-header { border-bottom: 1px solid #f1f5f9 !important; padding: 24px !important; }
+    .btn-close { filter: none !important; }
+    .modal-body { padding: 32px !important; }
+
+    /* Archive Status Chips */
+    .bg-success-mnc { background: #d1fae5; color: #065f46; }
+    .bg-danger-mnc { background: #fee2e2; color: #991b1b; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-base); }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 2px solid var(--bg-base); }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+  </style>
+</head>
+<body>
+
+<div class="app-shell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand-section">
+      <div class="brand-id">
+        <div class="brand-dot"></div>
+        <span>SHIELD·PRO</span>
+      </div>
+      <div class="small mt-2" style="color: #4b5563; font-weight:600; font-size:0.65rem;">MNC ENTERPRISE UNIT · SECURE v4.0</div>
+    </div>
+
+    <nav class="nav-group">
+      <div class="nav-btn active" onclick="switchView('view-monitor', event)">
+        <i class="bi bi-cpu"></i>
+        <span>Live Scan</span>
+      </div>
+      <div class="nav-btn" onclick="switchView('view-history', event); loadHistoryArchive();">
+        <i class="bi bi-database"></i>
+        <span>Integrity Archive</span>
+      </div>
+      <div class="nav-btn" onclick="switchView('view-health', event)">
+        <i class="bi bi-shield-check"></i>
+        <span>Neural Node</span>
+      </div>
+      <div class="nav-btn" onclick="switchView('view-settings', event)">
+        <i class="bi bi-gear"></i>
+        <span>Global Policy</span>
+      </div>
     </nav>
 
-    <div class="container mt-4">
-      <div class="row g-4">
-        <div class="col-lg-4">
-          <div class="card glass p-3">
-            <h5 class="mb-3">Upload Session</h5>
-            <input type="file" id="videoInput" accept="video/*" class="form-control mb-3" />
-            <button class="btn btn-primary w-100" onclick="uploadVideo()">Analyze</button>
-            <div id="loader" class="mt-3 text-muted fw-bold" style="display:none">Analyzing... Please wait ⏳</div>
-            <div id="preview" class="mt-3" style="display:none">
-              <video id="videoPreview" class="w-100 rounded" controls></video>
-            </div>
-          </div>
-          <div class="card glass p-3 mt-4">
-            <h6 class="mb-3">Verdict</h6>
-            <div id="verdictBadge" class="badge bg-secondary text-dark">Awaiting analysis</div>
-            <ul id="reasonsList" class="mt-3 small mb-0"></ul>
-          </div>
+    <div class="mt-auto p-3">
+      <div class="hud-badge w-100" style="background:#111; padding: 12px; border-radius:12px;">
+        <div class="brand-dot pulse" style="background:var(--accent-success); box-shadow: 0 0 10px var(--accent-success);"></div>
+        <div class="ms-2">
+            <div style="font-size:0.65rem; color:#6b7280; font-weight:700;">NODE CLUSTER</div>
+            <div style="font-size:0.75rem; color:#fff; font-weight:600;">Singapore (SG-1)</div>
         </div>
+      </div>
+    </div>
+  </aside>
 
-        <div class="col-lg-8">
-          <div class="card glass p-3 mb-4">
-            <h5 class="mb-3">Key Metrics</h5>
-            <div class="row text-center" id="kpis">
-              <div class="col-md-4">
-                <div class="kpi"><span id="kpiFaces" class="kpi-value">-</span><div class="kpi-label">Multi-face %</div></div>
-              </div>
-              <div class="col-md-4">
-                <div class="kpi"><span id="kpiGaze" class="kpi-value">-</span><div class="kpi-label">Gaze away %</div></div>
-              </div>
-              <div class="col-md-4">
-                <div class="kpi"><span id="kpiSpeech" class="kpi-value">-</span><div class="kpi-label">Speech ratio</div></div>
-              </div>
+  <!-- MAIN VIEWPORT -->
+  <main class="viewport">
+    <header class="header-bar">
+      <div class="d-flex align-items-center gap-2">
+        <span id="breadcrumb" class="text-dim small fw-bold uppercase">PROCTORING /</span>
+        <h4 id="page-title" class="text-bright fw-bold mb-0 ms-2">Live Real-time Monitoring</h4>
+      </div>
+      <div class="d-flex gap-4">
+        <div class="d-flex flex-column text-end">
+            <span class="small fw-bold text-dim">INF. LATENCY</span>
+            <span class="text-bright font-monospace small">18.4ms</span>
+        </div>
+        <div style="width:1px; background:var(--border-accent);"></div>
+        <div class="d-flex align-items-center gap-3">
+            <div class="text-end">
+                <div class="text-bright small fw-bold">Admin Core</div>
+                <div class="text-dim" style="font-size:0.65rem;">MNC-004192-X</div>
+            </div>
+            <div style="width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg, #1e293b, #0f172a); border:1px solid var(--border-accent);"></div>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-content view-fade">
+      
+      <!-- VIEW: MONITOR -->
+      <div id="view-monitor" class="m-view active">
+        <div class="row g-5">
+          <div class="col-lg-8">
+            <div class="scan-stage mb-4">
+                <div id="scan-line" class="hud-scanner"></div>
+                <div class="hud-overlay">
+                    <div class="hud-top">
+                        <div class="hud-badge"><div class="brand-dot pulse"></div>SECURE STREAM // 256-BIT</div>
+                        <div class="hud-badge">OFT: POSITIVE</div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <div class="hud-badge" id="frame-counter">FRAME: 00000</div>
+                        <div class="hud-badge text-indigo">NEURAL-LINK V4</div>
+                    </div>
+                </div>
+                <video id="videoPreview" class="video-feed" playsinline></video>
+                <div id="loader" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); display:none; z-index:20;">
+                    <div class="spinner-border text-primary" style="width:3rem; height:3rem;"></div>
+                    <div class="mt-3 small text-white fw-bold">ANALYZING CANDIDATE NEURONS...</div>
+                </div>
+            </div>
+
+            <div class="m-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="kpi-title">Speech Analysis Trace</div>
+                    <span class="hud-badge">NLP / WHISPER-V3</span>
+                </div>
+                <div id="transcriptBox" class="console" style="height:120px; border-color:transparent; background:#080808; color:#94a3b8;">
+                    No audio data processed. 
+                </div>
             </div>
           </div>
 
-          <div class="card glass p-3">
-            <div class="row g-3">
-              <div class="col-md-6">
-                <h6>Emotion</h6>
-                <canvas id="emotionChart"></canvas>
+          <!-- SIDE METRICS -->
+          <div class="col-lg-4">
+            <div class="m-card mb-4">
+              <div class="d-flex justify-content-between mb-4">
+                <div class="kpi-title">Initialization</div>
+                <input type="file" id="videoSelect" hidden>
+                <button class="btn-premium btn-sm" onclick="document.getElementById('videoSelect').click()">Upload Media</button>
               </div>
-              <div class="col-md-6">
-                <h6>Video Activity</h6>
-                <canvas id="videoChart"></canvas>
+              <div id="verdictBox" class="verdict-box v-pending">AWAITING SOURCE</div>
+              
+              <div class="row g-3 mt-4">
+                <div class="col-6">
+                    <div class="kpi-tile">
+                        <div class="kpi-title">Face Count</div>
+                        <div id="kpiFaces" class="kpi-val">0</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="kpi-tile" style="border-color:var(--accent-warning);">
+                        <div class="kpi-title">Gaze Anomaly</div>
+                        <div id="kpiGaze" class="kpi-val">0%</div>
+                    </div>
+                </div>
               </div>
-              <div class="col-12">
-                <h6 class="mt-2">Transcript</h6>
-                <div id="transcriptBox" class="transcript"></div>
+            </div>
+
+            <div class="m-card mb-4">
+                <div class="kpi-title mb-3">Affective Signature</div>
+                <canvas id="emotionChart" height="200"></canvas>
+            </div>
+
+            <div class="m-card">
+              <div class="kpi-title mb-3">Temporal Integrity Log</div>
+              <div id="miniLog" class="console" style="height:140px; border:none; background:transparent;">
+                <div class="console-line"><span class="console-ts">00:00:00</span>[SYS] Ready for ingestion.</div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <script src="script.js"></script>
-  </body>
+      <!-- VIEW: ARCHIVE -->
+      <div id="view-history" class="m-view" style="display:none;">
+        <div class="m-card">
+            <div class="d-flex justify-content-between align-items-center mb-5">
+                <div>
+                    <h5 class="text-bright fw-bold">Integrity Archive</h5>
+                    <div class="kpi-title">Global session repository</div>
+                </div>
+                <div class="d-flex gap-3">
+                    <input type="text" id="archiveSearch" oninput="searchArchive()" placeholder="Search ID, Candidate or Status..." class="form-control form-control-lg" style="background:rgba(255,255,255,0.03); border:1px solid var(--border-accent); color:#fff; width:350px; font-size:0.9rem; border-radius:12px;">
+                    <button class="btn-premium" onclick="loadHistoryArchive()"><i class="bi bi-arrow-clockwise"></i></button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="m-table">
+                    <thead>
+                        <tr>
+                            <th>Trace ID</th>
+                            <th>Global Verdict</th>
+                            <th>Dominant Emotion</th>
+                            <th>Risk Factors</th>
+                            <th>Ingestion Date</th>
+                            <th>Report</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody">
+                        <!-- Async injection -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+      </div>
+
+      <!-- VIEW: HEALTH -->
+      <div id="view-health" class="m-view" style="display:none;">
+         <div class="row g-4">
+            <div class="col-md-6">
+                <div class="m-card">
+                    <div class="kpi-title mb-4">Neural Cluster Clusters</div>
+                    <div class="d-flex flex-column gap-4">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-bright">Inference Node A (Primary)</span>
+                            <span class="status-chip bg-success text-dark">OPERATIONAL</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-bright">Cognitive Model V4</span>
+                            <span class="status-chip bg-success text-dark">HEALTHY</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-bright">GPU Core Utilization</span>
+                            <span class="status-chip bg-warning text-dark">CPU FALLBACK</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="m-card">
+                    <canvas id="loadChart" height="200"></canvas>
+                </div>
+            </div>
+         </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- MNC DRILL-DOWN MODAL -->
+<div class="modal fade" id="drilldownModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content" style="background:#0c0f14; border:1px solid var(--border-accent); border-radius:24px; color:var(--text-dim);">
+      <div class="modal-header border-0 p-4">
+        <h5 class="modal-title text-bright fw-bold">Neural Inspection Report</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 pt-0" id="drilldownBody">
+        <!-- Injected -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let emotionChart = null;
+    let archiveData = [];
+
+    // Switch View Logic
+    function switchView(viewId, event) {
+        document.querySelectorAll('.m-view').forEach(v => {
+            v.classList.remove('active');
+            // Small delay to allow 'display none' if needed, but here we use classes
+            setTimeout(() => { if(!v.classList.contains('active')) v.style.display = 'none'; }, 400);
+        });
+        
+        const target = document.getElementById(viewId);
+        target.style.display = 'block';
+        setTimeout(() => target.classList.add('active'), 10);
+
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        if(event) event.currentTarget.classList.add('active');
+
+        document.getElementById('page-title').innerText = event ? event.currentTarget.innerText : "Overview";
+    }
+
+    // Live Streaming / Analysis
+    const videoSelect = document.getElementById('videoSelect');
+    const videoPreview = document.getElementById('videoPreview');
+
+    videoSelect.addEventListener('change', async function() {
+        if(this.files && this.files[0]) {
+            const file = this.files[0];
+            videoPreview.src = URL.createObjectURL(file);
+            logAction("Ingesting media cluster: " + file.name);
+            
+            // Reset UI for new scan
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('scan-line').style.display = 'block';
+            document.getElementById('verdictBox').className = "verdict-box v-pending";
+            document.getElementById('verdictBox').innerText = "INGESTING MEDIA...";
+            document.getElementById('transcriptBox').innerHTML = '<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div><div class="mt-2">Processing Neurons...</div></div>';
+
+            const formData = new FormData();
+            formData.append("video", file);
+
+            try {
+                const resp = await fetch("http://127.0.0.1:5000/analyze", { method: "POST", body: formData });
+                const data = await resp.json();
+                
+                if (data.status === "success") {
+                    renderMncResults(data.analysis);
+                    logAction("Analysis complete. Check 'Intergrity Archive' for full logs.");
+                } else {
+                    throw new Error(data.message || "Unknown neural processing error.");
+                }
+            } catch (e) {
+                logAction("NODE ERROR: " + e.message);
+                document.getElementById('verdictBox').className = "verdict-box v-flag";
+                document.getElementById('verdictBox').innerText = "ENGINE FAILURE";
+                document.getElementById('transcriptBox').innerHTML = `<div class='text-danger'><b>Error Details:</b><br>${e.message}</div>`;
+            } finally {
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('scan-line').style.display = 'none';
+            }
+        }
+    });
+
+    function logAction(msg) {
+        const log = document.getElementById('miniLog');
+        const ts = new Date().toLocaleTimeString('en-GB');
+        const div = document.createElement('div');
+        div.className = "console-line";
+        div.innerHTML = `<span class="console-ts">${ts}</span> ${msg}`;
+        log.prepend(div);
+    }
+
+    function renderMncResults(analysis) {
+        if (!analysis || typeof analysis !== 'object') {
+            logAction("DATA ERROR: Incomplete neural payload received.");
+            document.getElementById('verdictBox').className = "verdict-box v-flag";
+            document.getElementById('verdictBox').innerText = "DATA ERROR";
+            return;
+        }
+
+        const v = analysis.video || {};
+        const classification = analysis.classification || {};
+        const reasons = Array.isArray(classification.reasons) ? classification.reasons : [];
+        const verdict = classification.verdict || 'Unknown';
+
+        document.getElementById('kpiFaces').innerText = v.multiFaceFrames || 0;
+        document.getElementById('kpiGaze').innerText = Math.round(((v.gazeAwayFrames || 0) / (v.sampledFrames || 1)) * 100) + "%";
+        
+        const vBox = document.getElementById('verdictBox');
+        vBox.innerText = verdict.toUpperCase();
+        vBox.className = "verdict-box " + (verdict === 'Clean' ? 'v-clean' : 'v-flag');
+
+        document.getElementById('transcriptBox').innerText = analysis.transcript || 'No verbal data captured.';
+
+        const emotionProbs = analysis.emotionProbabilities;
+        if (emotionProbs && typeof emotionProbs === 'object' && Object.keys(emotionProbs).length > 0) {
+            renderPremiumChart(emotionProbs);
+        }
+        logAction("Verdict: " + verdict + " | Flags: " + reasons.length);
+    }
+
+    function renderPremiumChart(probs) {
+        if (!probs || typeof probs !== 'object') return;
+        const ctx = document.getElementById('emotionChart').getContext('2d');
+        if(emotionChart) emotionChart.destroy();
+        emotionChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(probs),
+                datasets: [{
+                    data: Object.values(probs),
+                    backgroundColor: '#4f46e5',
+                    borderRadius: 12
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                maintainAspectRatio: false,
+                plugins: { legend: { display:false } },
+                scales: { 
+                    x: { grid: { color: '#f1f5f9' }, border:{display:false}, ticks:{color:'#64748b'} },
+                    y: { grid: { display: false }, border:{display:false}, ticks:{color:'#0f172a', font:{weight:600}} }
+                }
+            }
+        });
+    }
+
+    // Archive History
+    async function loadHistoryArchive() {
+        const body = document.getElementById('historyBody');
+        body.innerHTML = '<tr><td colspan="6" class="text-center py-5">Connecting to global archive...</td></tr>';
+        
+        try {
+            const resp = await fetch("http://127.0.0.1:5000/results");
+            const data = await resp.json();
+            if(data && Array.isArray(data.results)) {
+                archiveData = data.results;
+                renderArchive(archiveData);
+            } else {
+                body.innerHTML = '<tr><td colspan="6" class="text-center py-5">' + (data?.error || 'No data available') + '</td></tr>';
+            }
+        } catch (e) {
+            body.innerHTML = '<tr><td colspan="6" class="text-center py-5">ARCHIVE OFFLINE</td></tr>';
+        }
+    }
+
+    function renderArchive(list) {
+        const body = document.getElementById('historyBody');
+        body.innerHTML = '';
+        if (!Array.isArray(list) || list.length === 0) {
+            body.innerHTML = '<tr><td colspan="6" class="text-center py-5">No records found in archive.</td></tr>';
+            return;
+        }
+        list.slice().reverse().forEach(row => {
+            if (!row || typeof row !== 'object') return;
+            const tr = document.createElement('tr');
+            const classification = row.classification || {};
+            const verdict = classification.verdict || 'Unknown';
+            const reasons = Array.isArray(classification.reasons) ? classification.reasons : [];
+            const rowId = row._id || 'N/A';
+            const vClass = verdict === 'Clean' ? 'bg-success-mnc' : 'bg-danger-mnc';
+            tr.innerHTML = `
+                <td class="font-monospace small fw-bold text-indigo">#${rowId.length >= 8 ? rowId.substring(rowId.length - 8) : rowId}</td>
+                <td><span class="status-chip ${vClass}">${verdict.toUpperCase()}</span></td>
+                <td class="text-capitalize fw-600">${row.emotion || 'Not Detected'}</td>
+                <td class="text-dim">${reasons.length} Tags Found</td>
+                <td class="text-dim">MAR 2026</td>
+                <td><button class="btn btn-link btn-sm text-indigo p-0 fw-bold" onclick="drilldown('${rowId}')">INSPECT Report</button></td>
+            `;
+            body.appendChild(tr);
+        });
+    }
+
+    function searchArchive() {
+        const q = document.getElementById('archiveSearch').value.toLowerCase();
+        const filtered = archiveData.filter(d => d._id.includes(q) || d.classification.verdict.toLowerCase().includes(q));
+        renderArchive(filtered);
+    }
+
+    async function drilldown(id) {
+        const modal = new bootstrap.Modal(document.getElementById('drilldownModal'));
+        const body = document.getElementById('drilldownBody');
+        body.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div></div>';
+        modal.show();
+
+        try {
+            const resp = await fetch("http://127.0.0.1:5000/results/" + id);
+            const data = await resp.json();
+
+            if (!data || data.error) {
+                body.innerHTML = `<div class="text-center p-5 text-danger"><b>Error:</b> ${data?.error || 'Record not found.'}</div>`;
+                return;
+            }
+
+            const classification = data.classification || {};
+            const verdict = classification.verdict || 'Unknown';
+            const reasons = Array.isArray(classification.reasons) ? classification.reasons : [];
+
+            body.innerHTML = `
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="kpi-title">Identity Signature</div>
+                        <div class="text-bright font-monospace small mb-3">${data._id || 'N/A'}</div>
+                        <div class="v-pending verdict-box" style="padding:10px; font-size:1rem; background:#f1f5f9; border:none; text-transform:uppercase;">${data.emotion || 'unknown'} Affect Detected</div>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="status-chip ${verdict === 'Clean' ? 'bg-success-mnc' : 'bg-danger-mnc'} px-4 py-2 fw-800" style="font-size:0.9rem;">${verdict.toUpperCase()}</div>
+                    </div>
+                    <div class="col-12">
+                        <div class="kpi-title mb-2">Flagged Neural Events</div>
+                        <div class="console" style="height:auto; min-height:80px; color:#ef4444; background:#fff; border-color:#fee2e2;">
+                            ${reasons.length ? reasons.map(r => `● ${r}`).join('<br>') : 'No anomalies detected by Shield Engine.'}
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="kpi-title mb-2">Transcript Trace</div>
+                        <div class="console" style="height:140px; color:#475569; background:#fff;">${data.transcript || 'No verbal data captured in this session.'}</div>
+                    </div>
+                </div>
+            `;
+        } catch (e) {
+            body.innerHTML = `<div class="text-center p-5 text-danger"><b>Connection Error:</b> ${e.message}</div>`;
+        }
+    }
+
+    // Load Metrics Chart (Health)
+    new Chart(document.getElementById('loadChart'), {
+        type: 'line',
+        data: {
+            labels: ['10:00', '10:05', '10:10', '10:15', '10:20', '10:25'],
+            datasets: [{ 
+                label: 'Inference Load', 
+                data: [42, 38, 55, 48, 62, 59], 
+                borderColor: '#4f46e5', 
+                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                fill: true,
+                tension: 0.4 
+            }]
+        },
+        options: { 
+            plugins: { legend: { display:false } }, 
+            scales:{
+                x:{ grid:{display:false}, ticks:{color:'#64748b'} }, 
+                y:{ grid:{color:'#f1f5f9'}, ticks:{color:'#64748b'} }
+            } 
+        }
+    });
+
+</script>
+</body>
 </html>
+```

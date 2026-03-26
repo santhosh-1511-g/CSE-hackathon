@@ -2,7 +2,21 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from database import get_db
 from video_analysis import analyze_video
-from bson import ObjectId  # ✅ ADD THIS IMPORT
+from bson import ObjectId
+import sys
+import io
+
+# Force UTF-8 for all console output on Windows
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except (AttributeError, Exception):
+        try:
+            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+            sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+        except Exception:
+            pass  # Last resort: let it run with default encoding
 
 app = Flask(__name__)
 CORS(app)
@@ -18,8 +32,8 @@ def get_db_connection():
             _db.client.admin.command('ping')
             print("Mongo Database initialised")
         except Exception as e:
-            print(f"⚠️  MongoDB connection failed: {e}")
-            print("⚠️  Server will run without database. Results won't be saved.")
+            print(f"[!] MongoDB connection failed: {e}")
+            print("[!] Server will run without database. Results won't be saved.")
             _db = None
     return _db
 
@@ -34,6 +48,9 @@ def analyze():
         video_file = request.files['video']
         result = analyze_video(video_file)
         
+        if "error" in result:
+            return jsonify({"status": "error", "message": result["error"]}), 500
+
         # ✅ Insert result and capture inserted ID (if DB is available)
         db = get_db_connection()
         if db:
@@ -55,7 +72,7 @@ def analyze():
 
 @app.route("/")
 def home():
-    return "🎥 Interview Video Analysis Backend is Running!"
+    return "Interview Video Analysis Backend is Running!"
 @app.route('/results', methods=['GET'])
 def get_results():
     db = get_db_connection()

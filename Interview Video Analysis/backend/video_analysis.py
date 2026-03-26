@@ -6,6 +6,11 @@ from typing import Dict, Any, List, Tuple
 import numpy as np
 from deepface import DeepFace
 import speech_recognition as sr
+import imageio_ffmpeg
+
+# ✅ Ensure MoviePy/ImageIO can find FFmpeg (especially for Python 3.13)
+os.environ["IMAGEIO_FFMPEG_EXE"] = imageio_ffmpeg.get_ffmpeg_exe()
+
 try:
     from moviepy import VideoFileClip  # MoviePy 2.x
 except ImportError:
@@ -59,6 +64,7 @@ def analyze_video_path(video_path: str) -> Dict[str, Any]:
     motion_scores: List[float] = []
 
     dominant_emotion = None
+    emotion_probs = None
     prev_gray = None
 
     frame_index = 0
@@ -135,8 +141,10 @@ def analyze_video_path(video_path: str) -> Dict[str, Any]:
                 face_result = DeepFace.analyze(rgb, actions=['emotion'], enforce_detection=False)
                 if isinstance(face_result, list) and face_result:
                     dominant_emotion = face_result[0].get('dominant_emotion')
+                    emotion_probs = face_result[0].get('emotion')
                 elif isinstance(face_result, dict):
                     dominant_emotion = face_result.get('dominant_emotion')
+                    emotion_probs = face_result.get('emotion')
             except Exception:
                 dominant_emotion = None
 
@@ -166,6 +174,7 @@ def analyze_video_path(video_path: str) -> Dict[str, Any]:
             "speechRatio": round(vad_ratio, 3),
             "speechSegments": int(speech_segments),
         },
+        "emotionProbabilities": {k: round(v, 2) for k, v in emotion_probs.items()} if emotion_probs else {},
     }
 
     # Simple heuristic classifier with reasons
