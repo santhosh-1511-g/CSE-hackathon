@@ -67,7 +67,12 @@ def analyze():
 
     except Exception as e:
         import traceback
-        traceback.print_exc()
+        err_msg = traceback.format_exc()
+        try:
+            print(f"Analysis error: {err_msg}")
+        except OSError:
+            # Handle Windows console encoding issues gracefully
+            print(f"Analysis error: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route("/")

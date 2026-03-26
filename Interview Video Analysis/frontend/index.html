@@ -571,7 +571,13 @@
 
     function searchArchive() {
         const q = document.getElementById('archiveSearch').value.toLowerCase();
-        const filtered = archiveData.filter(d => d._id.includes(q) || d.classification.verdict.toLowerCase().includes(q));
+        const filtered = archiveData.filter(d => {
+            if (!d || typeof d !== 'object') return false;
+            const idMatch = d._id ? String(d._id).toLowerCase().includes(q) : false;
+            const verdictMatch = (d.classification && d.classification.verdict) 
+                ? d.classification.verdict.toLowerCase().includes(q) : false;
+            return idMatch || verdictMatch;
+        });
         renderArchive(filtered);
     }
 
