@@ -275,7 +275,7 @@ def create_candidate():
                 "status": "Initialized",
                 "ingestion_date": "MAR 2026"
             })
-            return jsonify({"status": "success", "id": str(inserted.inserted_id)}), 201
+            return jsonify({"status": "success", "candidate_id": str(inserted.inserted_id)}), 201
         else:
             return jsonify({"error": "Database not available"}), 503
     except Exception as e:

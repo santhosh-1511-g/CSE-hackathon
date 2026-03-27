@@ -196,37 +196,61 @@
                         </div>
                     </div>
 
-                    {/* Debug: Resume Alignment Section */}
-                    <div style={{ border: '5px solid magenta', margin: '10px', padding: '10px' }}>
-                        <h3 className="text-white font-bold mb-2">Debug: Resume Alignment Section</h3>
-                        {data?.resume_profile ? (
-                            <div className="text-emerald-400 text-xs font-mono whitespace-pre-wrap">
-                                RESUME_PROFILE FOUND: {JSON.stringify(data.resume_profile)}
-                            </div>
-                        ) : (
-                            <p style={{ color: 'red', fontWeight: 'bold' }}>RESUME_PROFILE DATA IS NULL OR UNDEFINED</p>
-                        )}
-                    </div>
-
-                    {/* Resume Alignment Card */}
-                    {data.skill_alignment && data.skill_alignment.length > 0 && (
-                        <div className="bg-slate-850 p-6 rounded-2xl border-4 border-magenta-500 shadow-lg">
-                            <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                <ShieldCheck/> Resume vs. Interview Alignment
+                    {/* Neural Fit Analytics */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Strengths & Weaknesses */}
+                        <div className="bg-slate-850 p-6 rounded-2xl border border-slate-800 shadow-lg">
+                            <h3 className="text-emerald-400 font-bold text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <ShieldCheck/> Neural Strengths
                             </h3>
-                            <div className="flex flex-wrap gap-4">
-                                {data.skill_alignment.map((skill, i) => (
-                                    <div key={i} className="flex flex-col items-center bg-slate-900/50 p-4 rounded-xl border border-slate-800 min-w-[120px]">
-                                        <span className="text-slate-300 font-bold mb-2 capitalize">{skill.skill}</span>
-                                        <span className={`text-xs px-3 py-1 rounded-full font-bold ${skill.mentions >= 2 ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-900' : 'bg-amber-900/40 text-amber-400 border border-amber-900'}`}>
-                                            {skill.mentions >= 2 ? 'Verified' : 'Gap'}
-                                        </span>
-                                        <span className="text-[10px] text-slate-500 mt-1 font-mono">{skill.mentions} mentions</span>
-                                    </div>
+                            <ul className="space-y-3">
+                                {data.resume_profile?.strengths?.map((s, i) => (
+                                    <li key={i} className="flex items-start gap-3 text-sm text-slate-300">
+                                        <div className="mt-1 w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
+                                        {s}
+                                    </li>
                                 ))}
+                            </ul>
+                            
+                            <h3 className="text-rose-400 font-bold text-xs uppercase tracking-widest mt-8 mb-4 flex items-center gap-2">
+                                <AlertTriangle/> Optimization Nodes (Weaknesses)
+                            </h3>
+                            <ul className="space-y-3">
+                                {data.resume_profile?.weaknesses?.map((w, i) => (
+                                    <li key={i} className="flex items-start gap-3 text-sm text-slate-400 italic">
+                                        <div className="mt-1 w-1.5 h-1.5 rounded-full bg-rose-500"></div>
+                                        {w}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        {/* Resume vs Interview Alignment Breakdown */}
+                        <div className="bg-slate-850 p-6 rounded-2xl border border-slate-800 shadow-lg">
+                            <h3 className="text-brand-accent font-bold text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <LaptopIcon/> Skill Verification Matrix
+                            </h3>
+                            <div className="space-y-4">
+                                {data.skill_alignment && data.skill_alignment.length > 0 ? (
+                                    data.skill_alignment.map((skill, i) => (
+                                        <div key={i} className="bg-slate-900/50 p-4 rounded-xl border border-slate-800 flex justify-between items-center">
+                                            <div>
+                                                <div className="text-slate-200 font-bold text-sm tracking-wide capitalize">{skill.skill}</div>
+                                                <div className="text-[10px] text-slate-500 font-mono mt-0.5">{skill.mentions} transcript mentions</div>
+                                            </div>
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter ${skill.mentions >= 1 ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-900' : 'bg-amber-950/40 text-amber-400 border border-amber-900'}`}>
+                                                {skill.mentions >= 1 ? 'Verified Depth' : 'Latency Found'}
+                                            </span>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-slate-500 text-xs italic p-4 text-center border border-dashed border-slate-800 rounded-xl">
+                                        Waiting for neural cross-referencing completion...
+                                    </div>
+                                )}
                             </div>
                         </div>
-                    )}
+                    </div>
 
                     {/* BOTTOM ROW: Details & Transcript */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
