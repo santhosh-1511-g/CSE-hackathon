@@ -20,13 +20,12 @@
             --text-dim: #64748b;
             --text-bright: #0f172a;
             --accent-primary: #4f46e5;
-            /* Indigo */
             --accent-success: #10b981;
             --accent-danger: #ef4444;
             --accent-warning: #f59e0b;
             --sidebar-width: 280px;
             --radius-premium: 16px;
-            --shadow-premium: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+            --shadow-premium: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
         * {
@@ -152,8 +151,7 @@
         }
 
         .m-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
         /* Live Monitor High-Tech View */
@@ -191,17 +189,17 @@
         }
 
         .hud-badge {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
             padding: 6px 14px;
             border-radius: 8px;
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.75rem;
-            color: #fff;
+            color: #475569;
             display: flex;
             align-items: center;
             gap: 8px;
+            font-weight: 700;
         }
 
         .hud-scanner {
@@ -474,18 +472,8 @@
                     <i class="bi bi-grid-1x2"></i>
                     <span>Dashboard</span>
                 </div>
-                <div class="nav-btn" onclick="switchView('view-history', event); loadHistoryArchive();">
-                    <i class="bi bi-database"></i>
-                    <span>Integrity Archive</span>
-                </div>
-                <div class="nav-btn" onclick="switchView('view-health', event)">
-                    <i class="bi bi-shield-check"></i>
-                    <span>Neural Node</span>
-                </div>
-                <div class="nav-btn" onclick="switchView('view-settings', event)">
-                    <i class="bi bi-gear"></i>
-                    <span>Global Policy</span>
-                </div>
+
+
                 <div class="mt-4 px-3" style="display:none;">
                     <button class="btn btn-primary w-100 rounded-pill fw-bold" onclick="showAddCandidateModal()">
                         <i class="bi bi-person-plus-fill me-2"></i> Add Candidate
@@ -493,16 +481,7 @@
                 </div>
             </nav>
 
-            <div class="mt-auto p-3">
-                <div class="hud-badge w-100" style="background:#111; padding: 12px; border-radius:12px;">
-                    <div class="brand-dot pulse"
-                        style="background:var(--accent-success); box-shadow: 0 0 10px var(--accent-success);"></div>
-                    <div class="ms-2">
-                        <div style="font-size:0.65rem; color:#6b7280; font-weight:700;">NODE CLUSTER</div>
-                        <div style="font-size:0.75rem; color:#fff; font-weight:600;">Singapore (SG-1)</div>
-                    </div>
-                </div>
-            </div>
+
         </aside>
 
         <!-- MAIN VIEWPORT -->
@@ -512,22 +491,7 @@
                     <span id="breadcrumb" class="text-dim small fw-bold uppercase">HR HUB /</span>
                     <h4 id="page-title" class="text-bright fw-bold mb-0 ms-2">Intake Dashboard</h4>
                 </div>
-                <div class="d-flex gap-4">
-                    <div class="d-flex flex-column text-end">
-                        <span class="small fw-bold text-dim">INF. LATENCY</span>
-                        <span class="text-bright font-monospace small">18.4ms</span>
-                    </div>
-                    <div style="width:1px; background:var(--border-accent);"></div>
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="text-end">
-                            <div class="text-bright small fw-bold">Admin Core</div>
-                            <div class="text-dim" style="font-size:0.65rem;">MNC-004192-X</div>
-                        </div>
-                        <div
-                            style="width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg, #1e293b, #0f172a); border:1px solid var(--border-accent);">
-                        </div>
-                    </div>
-                </div>
+
             </header>
 
             <div class="page-content view-fade">
@@ -546,17 +510,19 @@
 
                                 <div class="space-y-4">
                                     <div class="mb-4">
-                                        <label class="form-label small fw-bold text-dim">FULL NAME</label>
+                                        <label class="form-label small fw-bold text-dim" style="font-size:0.65rem;">FULL
+                                            NAME</label>
                                         <input type="text" id="dash-cand-name"
                                             class="form-control form-control-lg rounded-4 border-2"
-                                            style="background:#f8fafc;" placeholder="e.g. Santhosh Kumar">
+                                            style="background:var(--bg-base); font-size: small;"
+                                            placeholder="e.g. Santhosh Kumar">
                                     </div>
                                     <div class="mb-4">
                                         <label class="form-label small fw-bold text-dim uppercase tracking-widest"
                                             style="font-size:0.65rem;">Job Role Selection</label>
                                         <select id="dash-cand-role"
                                             class="form-select form-select-lg rounded-4 border-2"
-                                            style="background:#f8fafc; font-weight:600; color:#0f172a;">
+                                            style="background:var(--bg-base); font-weight:600; color:var(--text-bright);font-size: small;">
                                             <option value="IT / Software Jobs">IT / Software Jobs</option>
                                             <option value="Corporate / Management Roles">Corporate / Management Roles
                                             </option>
@@ -570,7 +536,7 @@
                                     <div class="mb-4">
                                         <label class="form-label small fw-bold text-dim">RESUME (PDF / DOCX)</label>
                                         <div class="p-4 border-2 border-dashed rounded-4 text-center"
-                                            style="background:#f1f5f9; border-color:#cbd5e1;">
+                                            style="background:var(--bg-base); border-color:var(--border-accent);">
                                             <input type="file" id="dash-cand-resume" accept=".pdf,.docx" hidden
                                                 onchange="updateFileName('dash-resume-name', this)">
                                             <button class="btn btn-outline-primary btn-sm rounded-pill px-4 mb-2"
@@ -584,7 +550,7 @@
                                         <label class="form-label small fw-bold text-dim">PROFILE PHOTO
                                             (Optional)</label>
                                         <div class="p-3 border-2 border-dashed rounded-4 text-center d-flex align-items-center gap-3"
-                                            style="background:#f1f5f9; border-color:#cbd5e1;">
+                                            style="background:var(--bg-base); border-color:var(--border-accent);">
                                             <div id="dash-photo-preview"
                                                 style="width:48px; height:48px; border-radius:50%; background:#e2e8f0; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">
                                                 <i class="bi bi-person-fill"
@@ -604,7 +570,7 @@
                                     <div class="mb-4">
                                         <label class="form-label small fw-bold text-dim">INTERVIEW MEDIA (MP4)</label>
                                         <div class="p-4 border-2 border-dashed rounded-4 text-center"
-                                            style="background:#f1f5f9; border-color:#cbd5e1;">
+                                            style="background:var(--bg-base); border-color:var(--border-accent);">
                                             <input type="file" id="dash-cand-video" accept="video/*" hidden
                                                 onchange="updateFileName('dash-video-name', this)">
                                             <button class="btn btn-outline-primary btn-sm rounded-pill px-4 mb-2"
@@ -636,8 +602,8 @@
                                         <thead>
                                             <tr>
                                                 <th>Candidate</th>
-                                                <th>Integrity</th>
-                                                <th>Rating</th>
+                                                <th>Integrity Index</th>
+                                                <th>Verdict</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
@@ -725,7 +691,179 @@
                     </div>
                 </div>
 
-            </div>
+                <!-- VIEW: AI INTELLIGENCE ENGINE -->
+                <div id="view-intelligence" class="m-view" style="display:none;">
+                    <div class="row g-4">
+                        <!-- Hybrid Intelligence System -->
+                        <div class="col-12">
+                            <div class="m-card text-center" style="background: #ffffff; border-color: #e2e8f0;">
+                                <div class="badge bg-indigo-soft text-primary mb-3 px-3 py-1 uppercase tracking-widest font-black"
+                                    style="font-size:0.6rem;">Core Architecture</div>
+                                <h3 class="text-bright fw-bold mb-3">Hybrid Intelligence Scoring System</h3>
+                                <p class="text-dim mx-auto" style="max-width: 700px;">ProctorShield integrates
+                                    deterministic resume parsing with neural behavioral analysis to create a unified
+                                    360° candidate profile with zero-tolerance for data inaccuracies.</p>
+                            </div>
+                        </div>
+
+                        <!-- Hybrid Columns -->
+                        <div class="col-md-6">
+                            <div class="m-card h-100" style="border-left: 4px solid var(--accent-primary);">
+                                <div class="d-flex align-items-center gap-3 mb-4">
+                                    <div class="icon-box p-3 bg-light rounded-4 text-primary"><i
+                                            class="bi bi-file-earmark-check" style="font-size:1.5rem;"></i></div>
+                                    <h5 class="text-bright fw-bold mb-0">Deterministic Resume Analysis</h5>
+                                </div>
+                                <ul class="list-unstyled d-flex flex-column gap-3 small text-dim">
+                                    <li class="d-flex gap-2"><i class="bi bi-check-circle-fill text-primary"></i>
+                                        <span><b>Rule-Based Validation:</b> Prevents hallucinations in candidate
+                                            history.</span>
+                                    </li>
+                                    <li class="d-flex gap-2"><i class="bi bi-check-circle-fill text-primary"></i>
+                                        <span><b>Extraction Integrity:</b> Ensures verify-before-score data flow.</span>
+                                    </li>
+                                    <li class="d-flex gap-2"><i class="bi bi-check-circle-fill text-primary"></i>
+                                        <span><b>High Accuracy:</b> Optimized for diverse PDF/DOCX structures.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="m-card h-100" style="border-left: 4px solid var(--accent-success);">
+                                <div class="d-flex align-items-center gap-3 mb-4">
+                                    <div class="icon-box p-3 bg-light rounded-4 text-success"><i class="bi bi-activity"
+                                            style="font-size:1.5rem;"></i></div>
+                                    <h5 class="text-bright fw-bold mb-0">Neural Interview Analysis</h5>
+                                </div>
+                                <ul class="list-unstyled d-flex flex-column gap-3 small text-dim">
+                                    <li class="d-flex gap-2"><i class="bi bi-check-circle-fill text-success"></i>
+                                        <span><b>Emotion Detection:</b> Real-time affect analysis via DeepFace.</span>
+                                    </li>
+                                    <li class="d-flex gap-2"><i class="bi bi-check-circle-fill text-success"></i>
+                                        <span><b>Speech Intelligence:</b> Linguistic clarity and structural
+                                            analysis.</span>
+                                    </li>
+                                    <li class="d-flex gap-2"><i class="bi bi-check-circle-fill text-success"></i>
+                                        <span><b>Behavioral Scoring:</b> Multi-modal fusion of visual/audio cues.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Strict Validation Rules -->
+                        <div class="col-lg-4">
+                            <div class="m-card h-100">
+                                <div class="kpi-title mb-4 font-black uppercase text-dim small tracking-widest">Strict
+                                    Validation Logic</div>
+                                <div class="d-flex flex-column gap-4">
+                                    <div class="p-3 rounded-4" style="background:#f8fafc; border:1px solid #e2e8f0;">
+                                        <div class="fw-bold text-bright small mb-1 uppercase tracking-tight">Work
+                                            Experience</div>
+                                        <div class="text-dim" style="font-size:0.75rem;">Company Name + Role/Duration
+                                            cross-validation. Address nodes excluded from entity extraction.</div>
+                                    </div>
+                                    <div class="p-3 rounded-4" style="background:#f8fafc; border:1px solid #e2e8f0;">
+                                        <div class="fw-bold text-bright small mb-1 uppercase tracking-tight">
+                                            Certification Shield</div>
+                                        <div class="text-dim" style="font-size:0.75rem;">Requires 'completed/certified'
+                                            semantic markers + valid issuing organization nodes.</div>
+                                    </div>
+                                    <div class="p-3 rounded-4" style="background:#f8fafc; border:1px solid #e2e8f0;">
+                                        <div class="fw-bold text-bright small mb-1 uppercase tracking-tight">Data
+                                            Protection</div>
+                                        <div class="text-dim" style="font-size:0.75rem;">Strict location-from-entity
+                                            separation. Zero-false-positive engine mapping.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Technology Stack -->
+                        <div class="col-lg-8">
+                            <div class="m-card h-100">
+                                <div class="kpi-title mb-4 font-black uppercase text-dim small tracking-widest">
+                                    Engineering Stack Inventory</div>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <div class="p-3 bg-light rounded-4 h-100 border text-center">
+                                            <div class="fw-bold text-bright small font-monospace">BACKEND</div>
+                                            <div class="text-dim extra-small mt-1">Python, Flask, PyMongo, MongoDB</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="p-3 bg-light rounded-4 h-100 border text-center">
+                                            <div class="fw-bold text-primary small font-monospace">AI / ML</div>
+                                            <div class="text-dim extra-small mt-1">Gemini AI, DeepFace, OpenCV, NLTK
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="p-3 bg-light rounded-4 h-100 border text-center">
+                                            <div class="fw-bold text-success small font-monospace">PROCESSING</div>
+                                            <div class="text-dim extra-small mt-1">MoviePy, PDFPlumber, FFmpeg</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="p-3 bg-light rounded-4 h-100 border text-center">
+                                            <div class="fw-bold text-indigo small font-monospace">FRONTEND UI</div>
+                                            <div class="text-dim extra-small mt-1">React, Tailwind CSS, Lucide,
+                                                Bootstrap, Chart.js</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="p-3 bg-light rounded-4 h-100 border text-center">
+                                            <div class="fw-bold text-dim small font-monospace">STRATEGY</div>
+                                            <div class="text-dim extra-small mt-1">Stable Offline-First Build, MockDB
+                                                Fallback</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Pipeline Architecture -->
+                        <div class="col-12">
+                            <div class="m-card" style="border: 1px solid #e2e8f0;">
+                                <div class="kpi-title mb-5 text-center font-black">Neural Orchestration Pipeline v4.0
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center px-4 flex-wrap gap-4">
+                                    <div class="text-center" style="width:120px;">
+                                        <div class="p-3 bg-indigo-soft text-primary rounded-circle mx-auto mb-2"
+                                            style="width:50px; height:50px; display:flex; align-items:center; justify-content:center;">
+                                            <i class="bi bi-cloud-upload"></i>
+                                        </div>
+                                        <div class="fw-bold text-bright small">INPUT LAYER</div>
+                                    </div>
+                                    <i class="bi bi-chevron-right text-dim"></i>
+                                    <div class="text-center" style="width:120px;">
+                                        <div class="p-3 bg-emerald-soft text-success rounded-circle mx-auto mb-2"
+                                            style="width:50px; height:50px; display:flex; align-items:center; justify-content:center;">
+                                            <i class="bi bi-gear-wide-connected"></i>
+                                        </div>
+                                        <div class="fw-bold text-bright small">PROCESSING</div>
+                                    </div>
+                                    <i class="bi bi-chevron-right text-dim"></i>
+                                    <div class="text-center" style="width:120px;">
+                                        <div class="p-3 bg-amber-soft text-warning rounded-circle mx-auto mb-2"
+                                            style="width:50px; height:50px; display:flex; align-items:center; justify-content:center;">
+                                            <i class="bi bi-cpu-fill"></i>
+                                        </div>
+                                        <div class="fw-bold text-bright small">AI ENGINE</div>
+                                    </div>
+                                    <i class="bi bi-chevron-right text-dim"></i>
+                                    <div class="text-center" style="width:120px;">
+                                        <div class="p-3 bg-indigo-soft text-primary rounded-circle mx-auto mb-2"
+                                            style="width:50px; height:50px; display:flex; align-items:center; justify-content:center;">
+                                            <i class="bi bi-display"></i>
+                                        </div>
+                                        <div class="fw-bold text-bright small">OUTPUT LAYER</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
         </main>
     </div>
 
@@ -916,7 +1054,7 @@
             if (cVideo) cVideo.value = '';
             if (rName) rName.innerText = '';
             if (vName) vName.innerText = '';
-            
+
             currentCid = null;
             if (typeof prevStep === 'function') prevStep(1);
             if (addModal) addModal.show();
@@ -1076,39 +1214,61 @@
                 const body = document.getElementById('dashLeaderboardBody');
                 body.innerHTML = '';
 
-                const processed = results.filter(r => {
+                const processedList = results.filter(r => {
                     const s = (r.status || '').toLowerCase();
                     return s === "processed" || s === "processing";
-                }).reverse().slice(0, 10);
+                }).reverse().slice(0, 15);
 
-                if (processed.length === 0) {
+                if (processedList.length === 0) {
                     body.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-dim italic">No active ingestions found.</td></tr>';
                     return;
                 }
 
-                for (let res of processed) {
+                processedList.forEach((res) => {
                     const tr = document.createElement('tr');
-                    const status = (res.status || '').toLowerCase();
-                    const isProcessing = status === "processing";
-                    const rating = isProcessing ? 'PROCESSING' : (res.integrity_index > 80 ? 'CLEAN' : 'FLAGGED');
-                    const chipClass = isProcessing ? 'bg-indigo text-white' : (res.integrity_index > 80 ? 'bg-success-mnc' : 'bg-danger-mnc');
-                    const scoreDisplay = isProcessing ? '<div class="spinner-border spinner-border-sm text-indigo"></div>' : `<div class="font-monospace fw-bold">${Math.round(res.integrity_index || 0)}%</div>`;
+                    const procStatus = (res.status || '').toLowerCase();
+                    const isProcessing = procStatus === "processing";
+                    const score = Math.round(res.integrity_index || 0);
+
+                    // Map hiring recommendation (from analysis_report or top level)
+                    const hiringStatus = (res.analysis_report?.status || '').toUpperCase();
+
+                    let rating = 'PENDING';
+                    let chipClass = 'bg-indigo text-white';
+
+                    if (isProcessing) {
+                        rating = 'SCANNING...';
+                    } else if (hiringStatus) {
+                        rating = hiringStatus;
+                        chipClass = hiringStatus === 'PROCEED' ? 'bg-success-mnc text-dark' : 'bg-danger-mnc text-white';
+                    } else {
+                        // Fallback to integrity-based rating
+                        rating = score > 80 ? 'CLEAN' : 'FLAGGED';
+                        chipClass = score > 80 ? 'bg-success-mnc text-dark' : 'bg-danger-mnc text-white';
+                    }
 
                     tr.innerHTML = `
-                    <td>
-                        <div class="fw-bold text-bright">${res.candidate_name || 'Anonymous'}</div>
-                        <div class="text-dim small" style="font-size:0.65rem;">ID: ${res._id.substring(0, 8)}...</div>
-                    </td>
-                    <td>${scoreDisplay}</td>
-                    <td><span class="status-chip ${chipClass}">${rating}</span></td>
-                    <td>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill" ${isProcessing ? 'disabled' : ''} onclick="window.location.href='deepdive.html?id=${res._id}'">
-                            ${isProcessing ? 'SCANNING...' : 'DEEP DIVE'}
-                        </button>
-                    </td>
-                `;
+                        <td>
+                            <div class="fw-bold text-bright">${res.candidate_name || 'Anonymous'}</div>
+                            <div class="text-dim small" style="font-size:0.65rem;">ID: ${res._id.substring(res._id.length - 8).toUpperCase()}</div>
+                        </td>
+                        <td>
+                            <div class="font-monospace fw-bold text-bright">${isProcessing ? 'SCANNING...' : score + '%'}</div>
+                        </td>
+                        <td>
+                             <span class="status-chip ${chipClass} fw-800" style="min-width: 90px; text-align: center;">
+                                ${rating}
+                             </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold" ${isProcessing ? 'disabled' : ''} 
+                                onclick="window.location.href='deepdive.html?id=${res._id}'" style="font-size:0.75rem;">
+                                DEEP DIVE
+                            </button>
+                        </td>
+                    `;
                     body.appendChild(tr);
-                }
+                });
             } catch (e) { console.error("Leaderboard error:", e); }
         }
 
@@ -1286,7 +1446,8 @@
                 logAction("Ranking Error: " + e.message);
             }
         }
-        // Live Streaming / Analysis
+
+        // Live Streaming / Analysis
         // ADDED: Wrapped initialization in DOMContentLoaded for stability
         document.addEventListener('DOMContentLoaded', () => {
             const vSel = document.getElementById('videoSelect');

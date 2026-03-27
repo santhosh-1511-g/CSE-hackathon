@@ -258,11 +258,18 @@ def get_report(id):
         gaze_dev = gaze_away / sampled if sampled > 0 else 0
         
         emotion = doc.get('emotionProbabilities', {})
-        resume_profile = doc.get('resume_profile', None)
+        resume_profile = doc.get('resume_profile', {
+            "role_match_score": 0,
+            "technical_score": 0,
+            "communication_score": 0,
+            "overall_fit_score": 0,
+            "status": "PENDING",
+            "reason": "Resume data not yet synchronized. Please re-upload.",
+            "report_data": {}
+        })
         
         # Generate Advanced Multimodal Report
         report = get_weighted_score(transcript, gaze_dev, emotion, resume_profile)
-        print(f"DEBUG: Report Data Keys: {report.keys()}")
         report['raw_data'] = serialize_mongo_doc(doc)
         
         return jsonify(report)

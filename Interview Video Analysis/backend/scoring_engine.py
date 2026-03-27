@@ -86,17 +86,24 @@ def get_weighted_score(transcript, gaze_deviation, emotion_summary, resume_profi
             logging.info(f"Score Calculation Trace: [Integrity] was [{round(integrity_score,1)}] because [Gaze Dev: {round(gaze_deviation,2)}].")
 
     # --- 3.1 Resume Skill Alignment ---
-    skill_analysis = []
+    skill_analysis_list = []
+    found_skills = resume_profile.get("top_5_technical_skills", []) if resume_profile else []
+    
     if resume_profile and "top_5_technical_skills" in resume_profile:
         for skill in resume_profile["top_5_technical_skills"]:
             mentions = transcript_lower.count(skill.lower())
-            skill_analysis.append({"skill": skill, "mentions": mentions})
+            skill_analysis_list.append({"skill": skill, "mentions": mentions})
             if mentions < 1: # Reduced from 2 to 1 for fairer hackathon scoring
                 critical_warnings.append({
                     "tag": "Skill Depth Warning", 
                     "confidence": 0.9, 
                     "message": f"Claimed expertise in {skill} but rarely mentioned it in the interview."
                 })
+
+    skill_alignment = {
+        "found": found_skills,
+        "details": skill_analysis_list
+    }
 
     # --- 4. Soft Skills (10%) ---
     smile_frequency = emotion_summary.get('happy', 20.0) if emotion_summary else 20.0
@@ -161,5 +168,7 @@ def get_weighted_score(transcript, gaze_deviation, emotion_summary, resume_profi
         "executive_reasoning": reasoning,
         "gaze_timeline": gaze_timeline,
         "status": status,
-        "skill_alignment": skill_analysis
+        "skill_alignment": skill_alignment,
+        "resume_profile": resume_profile,
+        "report_data": resume_profile.get("report_data", {}) if resume_profile else {}
     }
