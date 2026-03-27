@@ -115,14 +115,28 @@ def extract_text_from_pdf(file_bytes):
         print(f"PDF Extraction Error: {e}")
         return ""
 
-# --- Strict Validation Logic ---
-CAT_KEYWORDS = {
-    "Skills": ['python', 'java', 'c++', 'javascript', 'html', 'css', 'sql', 'react', 'django', 'flask', 'nodejs', 'mongodb', 'docker', 'aws', 'git', 'linux', 'machine learning'],
-    "Projects": ['project', 'app', 'system', 'platform', 'website', 'tool', 'bot', 'chatbot', 'github.com'],
-    "Workshops/Trainings": ['workshop', 'training', 'seminar', 'bootcamp', 'webinar', 'certification course'],
-    "Certifications": ['certification', 'certified', 'license', 'nptel', 'coursera', 'udemy', 'hackerrank', 'microsoft certified', 'aws certified'],
-    "Internships": ['internship', 'intern', 'trainee', 'summer intern'],
-    "Work Experience": ['job', 'experience', 'worked at', 'employment', 'senior', 'junior', 'developer at', 'engineer at']
+# --- Role-Based Benchmarks ---
+ROLE_BENCHMARKS = {
+    "IT / Software Jobs": {
+        "Skills": ['python', 'java', 'c++', 'javascript', 'react', 'django', 'flask', 'nodejs', 'mongodb', 'docker', 'aws', 'git', 'sql', 'machine learning', 'data structures', 'algorithms'],
+        "Projects": ['software', 'app', 'system', 'web', 'tool', 'github', 'coding', 'development']
+    },
+    "Corporate / Management Roles": {
+        "Skills": ['leadership', 'management', 'project management', 'communication', 'decision making', 'strategy', 'operations', 'stakeholder', 'team building', 'presentation'],
+        "Projects": ['project', 'team', 'managed', 'led', 'coordinated', 'handling', 'operations']
+    },
+    "Sales & Marketing Jobs": {
+        "Skills": ['sales', 'marketing', 'persuasion', 'communication', 'negotiation', 'digital marketing', 'seo', 'content strategy', 'advertising', 'crm', 'leads', 'revenue'],
+        "Projects": ['campaign', 'marketing', 'sales', 'growth', 'market research', 'branding']
+    },
+    "Core / Technical Jobs (Non-IT)": {
+        "Skills": ['mechanical', 'civil', 'electrical', 'autocad', 'design', 'manufacturing', 'site', 'field work', 'thermodynamics', 'structural', 'analysis', 'machinery'],
+        "Projects": ['core', 'technical', 'field', 'infrastructure', 'design', 'machinery', 'plant']
+    },
+    "Finance & Accounting Jobs": {
+        "Skills": ['accounting', 'finance', 'excel', 'tally', 'auditing', 'taxation', 'financial analysis', 'banking', 'investment', 'ledger', 'balance sheet', 'gst'],
+        "Projects": ['finance', 'financial', 'audit', 'accounts', 'tax', 'portfolio']
+    }
 }
 
 CERT_ORGS = ['nptel', 'coursera', 'udemy', 'hackerrank', 'microsoft', 'google', 'aws', 'cisco', 'oracle', 'linkedin', 'edx', 'simplilearn']
@@ -161,8 +175,8 @@ def calculate_communication_score(text):
     
     return max(0, min(100, score))
 
-def extract_resume_metadata(file_stream) -> dict:
-    """Advanced & Strict HR Resume Analyzer AI."""
+def extract_resume_metadata(file_stream, selected_role="IT / Software Jobs") -> dict:
+    """Advanced & Strict Role-Based HR Resume Analyzer AI."""
     # Read file content
     try:
         file_bytes = file_stream.read()
@@ -179,25 +193,25 @@ def extract_resume_metadata(file_stream) -> dict:
     t_lower = _text_lower(text)
     lines = [line.strip() for line in text.split('\n') if line.strip()]
     report_data = {}
-    found_count = 0
-
-    # 1. Skills (Direct Scan)
-    skills_found = [s for s in CAT_KEYWORDS["Skills"] if s in t_lower]
+    
+    # Get rolebenchmarks (default to IT if not found)
+    benchmarks = ROLE_BENCHMARKS.get(selected_role, ROLE_BENCHMARKS["IT / Software Jobs"])
+    
+    # 1. Skills (Filtered by Role Relevance)
+    skills_found = [s for s in benchmarks["Skills"] if s in t_lower]
     report_data["Skills"] = {"status": "FOUND" if skills_found else "NOT FOUND", "details": ", ".join(skills_found[:10]) if skills_found else "None"}
-    if skills_found: found_count += 1
 
-    # 2. Projects (Content Validation)
+    # 2. Projects (Role Relevance + content validation)
     projects_found = []
     for line in lines:
-        if any(k in line.lower() for k in CAT_KEYWORDS["Projects"]) and len(line) > 12:
+        if any(k in line.lower() for k in benchmarks["Projects"]) and len(line) > 12:
             projects_found.append(line)
-    report_data["Projects"] = {"status": "FOUND" if projects_found else "NOT FOUND", "details": ", ".join([p[:45] for p in projects_found[:3]]) if projects_found else "None"}
-    if projects_found: found_count += 1
+    report_data["Projects"] = {"status": "FOUND" if projects_found else "NOT FOUND", "details": ", ".join([p[:45].strip() + "..." for p in projects_found[:3]]) if projects_found else "None"}
 
-    # 3. Workshops (Content Validation)
-    workshops_found = [line for line in lines if any(k in line.lower() for k in CAT_KEYWORDS["Workshops/Trainings"]) and len(line) > 10]
+    # 3. Workshops (General check)
+    w_keys = ['workshop', 'training', 'seminar', 'bootcamp', 'webinar', 'certification course']
+    workshops_found = [line for line in lines if any(k in line.lower() for k in w_keys) and len(line) > 10]
     report_data["Workshops/Trainings"] = {"status": "FOUND" if workshops_found else "NOT FOUND", "details": ", ".join(workshops_found[:2]) if workshops_found else "None"}
-    if workshops_found: found_count += 1
 
     # 4. Certifications (STRICT: Key + Valid Org)
     certs_found = []
@@ -208,56 +222,75 @@ def extract_resume_metadata(file_stream) -> dict:
         if has_key and has_org:
             certs_found.append(line)
     report_data["Certifications"] = {"status": "FOUND" if certs_found else "NOT FOUND", "details": ", ".join(certs_found[:2]) if certs_found else "None"}
-    if certs_found: found_count += 1
 
     # 5. Internships (STRICT: Key + Role/Duration)
     interns_found = []
     for line in lines:
         l_low = line.lower()
         if 'intern' in l_low:
-            # Must also mention a generic role indicator OR a date pattern to be valid experience
             has_role = any(r in l_low for r in ROLE_INDICATORS)
             has_dur = bool(re.search(DURATION_PATTERN, l_low))
             if has_role or has_dur:
                 interns_found.append(line)
     report_data["Internships"] = {"status": "FOUND" if interns_found else "NOT FOUND", "details": ", ".join(interns_found[:2]) if interns_found else "None"}
-    if interns_found: found_count += 1
 
     # 6. Work Experience (STRICT: Not an address, must have role/position + duration)
     work_found = []
     for line in lines:
         l_low = line.lower()
-        # Filter out common address noise
         if any(noise in l_low for noise in ['street', 'road', 'nagar', 'colony', 'apartment', 'house no']): 
             continue
-            
         has_exp_key = any(k in l_low for k in ['experience', 'worked at', 'employment', 'developer at', 'engineer at'])
         has_role = any(r in l_low for r in ROLE_INDICATORS)
         has_dur = bool(re.search(DURATION_PATTERN, l_low))
-        
         if (has_exp_key and (has_role or has_dur)) or (has_role and has_dur):
             work_found.append(line)
-            
     report_data["Work Experience"] = {"status": "FOUND" if work_found else "NOT FOUND", "details": ", ".join(work_found[:2]) if work_found else "None"}
-    if work_found: found_count += 1
 
     # Communication Skill Logic
     comm_percent = calculate_communication_score(text)
     
-    # Format the strict report string
-    formatted_report = (
-        "Candidate Evaluation Report:\n\n"
-        f"Skills: {report_data['Skills']['status']}\nDetails: {report_data['Skills']['details']}\n\n"
-        f"Projects: {report_data['Projects']['status']}\nDetails: {report_data['Projects']['details']}\n\n"
-        f"Workshops/Trainings: {report_data['Workshops/Trainings']['status']}\nDetails: {report_data['Workshops/Trainings']['details']}\n\n"
-        f"Certifications: {report_data['Certifications']['status']}\nDetails: {report_data['Certifications']['details']}\n\n"
-        f"Internships: {report_data['Internships']['status']}\nDetails: {report_data['Internships']['details']}\n\n"
-        f"Work Experience: {report_data['Work Experience']['status']}\nDetails: {report_data['Work Experience']['details']}\n\n"
-        f"Communication Skills: {comm_percent}%"
-    )
+    # --- Role Fit & Selection Logic ---
+    # Role Fit Score (0-10) based on skills and projects
+    skill_score = (len(skills_found) / 5) * 5  # Max 5 points for skills
+    proj_score = (len(projects_found) / 2) * 5  # Max 5 points for projects
+    role_fit_score = min(10, round(skill_score + proj_score, 1))
 
-    # Scoring
-    completeness_score = round((found_count / 6) * 10, 1)
+    # Overall Resume Score (0-10) based on category presence
+    found_categories = 0
+    for cat in ["Skills", "Projects", "Workshops/Trainings", "Certifications", "Internships", "Work Experience"]:
+        if report_data[cat]["status"] == "FOUND": found_categories += 1
+    resume_score = round((found_categories / 6) * 10, 1)
+
+    # Final Decision Status
+    # Criteria: Role Fit > 6 AND (Skills FOUND OR Experience FOUND) AND Communication > 50
+    is_selected = (role_fit_score >= 6) and (len(skills_found) > 0 or len(work_found) > 0) and (comm_percent >= 50)
+    status = "SELECTED" if is_selected else "NOT SELECTED"
+    
+    # Reason Generator
+    if is_selected:
+        reason = f"Candidate matches {len(skills_found)} role-specific skills with a strong {role_fit_score}/10 Fit Index. "
+        reason += f"Communication quality ({comm_percent}%) meets professional standards."
+    else:
+        if role_fit_score < 6:
+            reason = f"Low role alignment ({role_fit_score}/10). Resume lacks sufficient keywords relevant to {selected_role}."
+        elif comm_percent < 50:
+            reason = "Communication quality score is below the required 50% threshold for professional intake."
+        else:
+            reason = "Candidate lacks either verified skills or professional experience in the selected domain."
+
+    return {
+        "name": "Candidate Profile", # Placeholder, name extraction could be added if needed
+        "selected_role": selected_role,
+        "completeness_score": resume_score, # Mapping old key for compatibility
+        "resume_score": resume_score,
+        "role_fit_score": role_fit_score,
+        "communication_skills": comm_percent,
+        "selection_status": status,
+        "selection_reason": reason,
+        "report_data": report_data,
+        "raw_text": text[:500] + "..."
+    }
 
     return {
         "name": lines[0][:30] if lines else "Candidate",

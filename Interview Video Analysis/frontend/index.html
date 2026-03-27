@@ -1,658 +1,1048 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ProctorShield Global | Neural Integrity Platform</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <style>
-    :root {
-      --bg-base: #f8fafc;
-      --bg-surface: #ffffff;
-      --bg-sidebar: #ffffff;
-      --border-accent: #e2e8f0;
-      --text-dim: #64748b;
-      --text-bright: #0f172a;
-      --accent-primary: #4f46e5; /* Indigo */
-      --accent-success: #10b981;
-      --accent-danger: #ef4444;
-      --accent-warning: #f59e0b;
-      --sidebar-width: 280px;
-      --radius-premium: 16px;
-      --shadow-premium: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProctorShield Global | Neural Integrity Platform</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-base: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-sidebar: #ffffff;
+            --border-accent: #e2e8f0;
+            --text-dim: #64748b;
+            --text-bright: #0f172a;
+            --accent-primary: #4f46e5;
+            /* Indigo */
+            --accent-success: #10b981;
+            --accent-danger: #ef4444;
+            --accent-warning: #f59e0b;
+            --sidebar-width: 280px;
+            --radius-premium: 16px;
+            --shadow-premium: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+        }
 
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body {
-      background: var(--bg-base);
-      color: var(--text-dim);
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      overflow: hidden;
-      -webkit-font-smoothing: antialiased;
-    }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    /* MNC Premium Layout */
-    .app-shell { display: flex; height: 100vh; overflow:hidden; }
-    
-    .sidebar {
-      width: var(--sidebar-width);
-      background: var(--bg-sidebar);
-      border-right: 1px solid var(--border-accent);
-      display: flex; flex-direction: column;
-      padding: 32px 12px;
-    }
+        body {
+            background: var(--bg-base);
+            color: var(--text-dim);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
 
-    .brand-section { padding: 0 20px 32px; border-bottom: 1px solid var(--border-accent); margin-bottom: 32px; }
-    .brand-id { display:flex; align-items:center; gap:14px; font-weight:800; font-size:1.4rem; color:var(--text-bright); letter-spacing:-0.5px; }
-    .brand-dot { width: 12px; height: 12px; background: var(--accent-primary); border-radius: 4px; box-shadow: 0 0 15px rgba(79, 70, 229, 0.3); }
+        /* MNC Premium Layout */
+        .app-shell {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
 
-    .nav-group { display: flex; flex-direction: column; gap: 4px; }
-    .nav-btn {
-      display: flex; align-items: center; gap: 14px; padding: 14px 20px;
-      color: var(--text-dim); text-decoration: none; border-radius: 12px;
-      font-weight: 500; font-size:0.95rem; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .nav-btn:hover { background: #f1f5f9; color: var(--text-bright); }
-    .nav-btn.active { 
-      background: #eff6ff; color: var(--accent-primary); 
-      box-shadow: inset 0 0 0 1px rgba(79, 70, 229, 0.1); 
-    }
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-accent);
+            display: flex;
+            flex-direction: column;
+            padding: 32px 12px;
+        }
 
-    /* Main Viewport */
-    .viewport { flex: 1; display: flex; flex-direction: column; background: #f8fafc; overflow-y: auto; }
-    .header-bar {
-      height: 80px; display: flex; align-items: center; justify-content: space-between;
-      padding: 0 40px; border-bottom: 1px solid var(--border-accent); background: #ffffffa0; backdrop-filter: blur(10px);
-      position: sticky; top:0; z-index: 100;
-    }
+        .brand-section {
+            padding: 0 20px 32px;
+            border-bottom: 1px solid var(--border-accent);
+            margin-bottom: 32px;
+        }
 
-    .page-content { padding: 40px; }
+        .brand-id {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: var(--text-bright);
+            letter-spacing: -0.5px;
+        }
 
-    /* Elegant Cards */
-    .m-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-accent); border-radius: var(--radius-premium);
-      padding: 32px; transition: all 0.3s;
-      box-shadow: var(--shadow-premium);
-    }
-    .m-card:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08); }
+        .brand-dot {
+            width: 12px;
+            height: 12px;
+            background: var(--accent-primary);
+            border-radius: 4px;
+            box-shadow: 0 0 15px rgba(79, 70, 229, 0.3);
+        }
 
-    /* Live Monitor High-Tech View */
-    .scan-stage { 
-      position: relative; aspect-ratio: 16/9; background: #000; border-radius: 20px; 
-      overflow: hidden; border: 1px solid var(--border-accent);
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
-    }
-    .video-feed { width:100%; height:100%; object-fit: contain; }
-    
-    .hud-overlay {
-      position: absolute; inset: 0; pointer-events: none; padding: 24px;
-      display: flex; flex-direction: column; justify-content: space-between;
-      z-index: 10;
-    }
-    .hud-top { display: flex; justify-content: space-between; align-items: flex-start; }
-    .hud-badge { 
-      background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2);
-      padding: 6px 14px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #fff;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .hud-scanner { 
-      position: absolute; top:0; left:0; width:100%; height:2px; 
-      background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
-      animation: scanAnim 3s infinite linear; display: none;
-    }
-    @keyframes scanAnim { 0% { top: 0; } 50% { top: 100%; } 100% { top: 0; } }
+        .nav-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
 
-    /* Forensic Console */
-    .console {
-      background: #fdfdfd; border-radius: 12px; padding: 20px; font-family: 'JetBrains Mono', monospace;
-      font-size: 0.8rem; height: 160px; overflow-y: auto; color: #334155; border: 1px solid var(--border-accent);
-    }
-    .console-line { margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #f1f5f9; }
-    .console-ts { color: var(--text-dim); margin-right: 12px; font-weight: 600; }
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 20px;
+            color: var(--text-dim);
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-    /* MNC KPI Tiles */
-    .kpi-tile { border-left: 4px solid var(--accent-primary); padding-left: 20px; }
-    .kpi-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; color: var(--text-dim); }
-    .kpi-val { font-size: 2rem; font-weight: 700; color: var(--text-bright); letter-spacing: -1px; }
+        .nav-btn:hover {
+            background: #f1f5f9;
+            color: var(--text-bright);
+        }
 
-    /* Verdict Refinement */
-    .verdict-box {
-      border-radius: 16px; padding: 24px; text-align: center; font-weight: 700;
-      letter-spacing: 1px; font-size: 1.2rem; transition: all 0.4s;
-    }
-    .v-pending { background: #f8fafc; color: var(--text-dim); border: 1px solid var(--border-accent); }
-    .v-clean { background: #ecfdf5; color: var(--accent-success); border: 1px solid #10b98140; }
-    .v-flag { background: #fef2f2; color: var(--accent-danger); border: 1px solid #ef444440; }
+        .nav-btn.active {
+            background: #eff6ff;
+            color: var(--accent-primary);
+            box-shadow: inset 0 0 0 1px rgba(79, 70, 229, 0.1);
+        }
 
-    /* UI Table for Archive */
-    .m-table { width: 100%; border-spacing: 0; }
-    .m-table th { padding: 20px; font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); border-bottom: 1px solid var(--border-accent); letter-spacing: 1px; text-align: left; }
-    .m-table td { padding: 20px; color: var(--text-bright); font-size: 0.9rem; border-bottom: 1px solid var(--border-accent); }
-    .m-table tr:hover td { background: #f8fafc; }
-    .status-chip { padding: 6px 14px; border-radius: 100px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+        /* Main Viewport */
+        .viewport {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f8fafc;
+            overflow-y: auto;
+        }
 
-    /* Silky Smooth View Transitions */
-    .m-view { opacity: 0; transition: opacity 0.4s ease, transform 0.4s ease; transform: translateY(10px); }
-    .m-view.active { opacity: 1; transform: translateY(0); display: block !important; }
+        .header-bar {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            border-bottom: 1px solid var(--border-accent);
+            background: #ffffffa0;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
 
-    #breadcrumb { letter-spacing: 2px; opacity: 0.5; transition: all 0.3s; color: var(--text-dim); font-weight: 700; }
-    #breadcrumb:hover { opacity: 1; color: var(--accent-primary); }
+        .page-content {
+            padding: 40px;
+        }
 
-    .pulse { animation: pulseAnim 2s infinite; }
-    @keyframes pulseAnim { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        /* Elegant Cards */
+        .m-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-accent);
+            border-radius: var(--radius-premium);
+            padding: 32px;
+            transition: all 0.3s;
+            box-shadow: var(--shadow-premium);
+        }
 
-    .btn-premium {
-      background: var(--accent-primary); color: #fff; border:none; padding: 12px 28px;
-      border-radius: 12px; font-weight: 600; font-size: 0.9rem; transition: all 0.2s;
-      box-shadow: 0 8px 15px -3px rgba(79, 70, 229, 0.3);
-    }
-    .btn-premium:hover { transform: translateY(-2px); box-shadow: 0 12px 20px -3px rgba(79, 70, 229, 0.4); filter: brightness(1.1); }
+        .m-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08);
+        }
 
-    .modal-content { border: none !important; border-radius: 24px !important; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.2) !important; background: #fff !important; color: #1e293b !important; }
-    .modal-header { border-bottom: 1px solid #f1f5f9 !important; padding: 24px !important; }
-    .btn-close { filter: none !important; }
-    .modal-body { padding: 32px !important; }
+        /* Live Monitor High-Tech View */
+        .scan-stage {
+            position: relative;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border-accent);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        }
 
-    /* Archive Status Chips */
-    .bg-success-mnc { background: #d1fae5; color: #065f46; }
-    .bg-danger-mnc { background: #fee2e2; color: #991b1b; }
+        .video-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
 
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: var(--bg-base); }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 2px solid var(--bg-base); }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .hud-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            z-index: 10;
+        }
 
-  </style>
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .hud-badge {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hud-scanner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+            animation: scanAnim 3s infinite linear;
+            display: none;
+        }
+
+        @keyframes scanAnim {
+            0% {
+                top: 0;
+            }
+
+            50% {
+                top: 100%;
+            }
+
+            100% {
+                top: 0;
+            }
+        }
+
+        /* Forensic Console */
+        .console {
+            background: #fdfdfd;
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            height: 160px;
+            overflow-y: auto;
+            color: #334155;
+            border: 1px solid var(--border-accent);
+        }
+
+        .console-line {
+            margin-bottom: 6px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .console-ts {
+            color: var(--text-dim);
+            margin-right: 12px;
+            font-weight: 600;
+        }
+
+        /* MNC KPI Tiles */
+        .kpi-tile {
+            border-left: 4px solid var(--accent-primary);
+            padding-left: 20px;
+        }
+
+        .kpi-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 4px;
+            color: var(--text-dim);
+        }
+
+        .kpi-val {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-bright);
+            letter-spacing: -1px;
+        }
+
+        /* Verdict Refinement */
+        .verdict-box {
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            font-weight: 700;
+            letter-spacing: 1px;
+            font-size: 1.2rem;
+            transition: all 0.4s;
+        }
+
+        .v-pending {
+            background: #f8fafc;
+            color: var(--text-dim);
+            border: 1px solid var(--border-accent);
+        }
+
+        .v-clean {
+            background: #ecfdf5;
+            color: var(--accent-success);
+            border: 1px solid #10b98140;
+        }
+
+        .v-flag {
+            background: #fef2f2;
+            color: var(--accent-danger);
+            border: 1px solid #ef444440;
+        }
+
+        /* UI Table for Archive */
+        .m-table {
+            width: 100%;
+            border-spacing: 0;
+        }
+
+        .m-table th {
+            padding: 20px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            border-bottom: 1px solid var(--border-accent);
+            letter-spacing: 1px;
+            text-align: left;
+        }
+
+        .m-table td {
+            padding: 20px;
+            color: var(--text-bright);
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border-accent);
+        }
+
+        .m-table tr:hover td {
+            background: #f8fafc;
+        }
+
+        .status-chip {
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        /* Silky Smooth View Transitions */
+        .m-view {
+            opacity: 0;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            transform: translateY(10px);
+        }
+
+        .m-view.active {
+            opacity: 1;
+            transform: translateY(0);
+            display: block !important;
+        }
+
+        #breadcrumb {
+            letter-spacing: 2px;
+            opacity: 0.5;
+            transition: all 0.3s;
+            color: var(--text-dim);
+            font-weight: 700;
+        }
+
+        #breadcrumb:hover {
+            opacity: 1;
+            color: var(--accent-primary);
+        }
+
+        .pulse {
+            animation: pulseAnim 2s infinite;
+        }
+
+        @keyframes pulseAnim {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .btn-premium {
+            background: var(--accent-primary);
+            color: #fff;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            box-shadow: 0 8px 15px -3px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-premium:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px -3px rgba(79, 70, 229, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .modal-content {
+            border: none !important;
+            border-radius: 24px !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2) !important;
+            background: #fff !important;
+            color: #1e293b !important;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #f1f5f9 !important;
+            padding: 24px !important;
+        }
+
+        .btn-close {
+            filter: none !important;
+        }
+
+        .modal-body {
+            padding: 32px !important;
+        }
+
+        /* Archive Status Chips */
+        .bg-success-mnc {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .bg-danger-mnc {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-base);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+            border: 2px solid var(--bg-base);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
 </head>
+
 <body>
 
-<div class="app-shell">
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="brand-section">
-      <div class="brand-id">
-        <div class="brand-dot"></div>
-        <span>SHIELD·PRO</span>
-      </div>
-      <div class="small mt-2" style="color: #4b5563; font-weight:600; font-size:0.65rem;">MNC ENTERPRISE UNIT · SECURE v4.0</div>
-    </div>
-
-    <nav class="nav-group">
-      <div class="nav-btn active" onclick="switchView('view-monitor', event)">
-        <i class="bi bi-grid-1x2"></i>
-        <span>Dashboard</span>
-      </div>
-      <div class="nav-btn" onclick="switchView('view-history', event); loadHistoryArchive();">
-        <i class="bi bi-database"></i>
-        <span>Integrity Archive</span>
-      </div>
-      <div class="nav-btn" onclick="switchView('view-health', event)">
-        <i class="bi bi-shield-check"></i>
-        <span>Neural Node</span>
-      </div>
-      <div class="nav-btn" onclick="switchView('view-settings', event)">
-        <i class="bi bi-gear"></i>
-        <span>Global Policy</span>
-      </div>
-      <div class="mt-4 px-3" style="display:none;">
-        <button class="btn btn-primary w-100 rounded-pill fw-bold" onclick="showAddCandidateModal()">
-            <i class="bi bi-person-plus-fill me-2"></i> Add Candidate
-        </button>
-      </div>
-    </nav>
-
-    <div class="mt-auto p-3">
-      <div class="hud-badge w-100" style="background:#111; padding: 12px; border-radius:12px;">
-        <div class="brand-dot pulse" style="background:var(--accent-success); box-shadow: 0 0 10px var(--accent-success);"></div>
-        <div class="ms-2">
-            <div style="font-size:0.65rem; color:#6b7280; font-weight:700;">NODE CLUSTER</div>
-            <div style="font-size:0.75rem; color:#fff; font-weight:600;">Singapore (SG-1)</div>
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- MAIN VIEWPORT -->
-  <main class="viewport">
-    <header class="header-bar">
-      <div class="d-flex align-items-center gap-2">
-        <span id="breadcrumb" class="text-dim small fw-bold uppercase">HR HUB /</span>
-        <h4 id="page-title" class="text-bright fw-bold mb-0 ms-2">Intake Dashboard</h4>
-      </div>
-      <div class="d-flex gap-4">
-        <div class="d-flex flex-column text-end">
-            <span class="small fw-bold text-dim">INF. LATENCY</span>
-            <span class="text-bright font-monospace small">18.4ms</span>
-        </div>
-        <div style="width:1px; background:var(--border-accent);"></div>
-        <div class="d-flex align-items-center gap-3">
-            <div class="text-end">
-                <div class="text-bright small fw-bold">Admin Core</div>
-                <div class="text-dim" style="font-size:0.65rem;">MNC-004192-X</div>
-            </div>
-            <div style="width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg, #1e293b, #0f172a); border:1px solid var(--border-accent);"></div>
-        </div>
-      </div>
-    </header>
-
-    <div class="page-content view-fade">
-      
-      <!-- VIEW: MONITOR -->
-      <div id="view-monitor" class="m-view active">
-        <div class="row g-4">
-          <!-- LEFT: INTAKE FORM -->
-          <div class="col-lg-5">
-            <div class="m-card h-100">
-               <div class="d-flex align-items-center gap-3 mb-4">
-                  <div class="brand-dot" style="width:10px; height:10px;"></div>
-                  <h6 class="text-bright fw-bold mb-0 uppercase tracking-widest" style="font-size:0.75rem;">New Candidate Onboarding</h6>
-               </div>
-               
-               <div class="space-y-4">
-                  <div class="mb-4">
-                     <label class="form-label small fw-bold text-dim">FULL NAME</label>
-                     <input type="text" id="dash-cand-name" class="form-control form-control-lg rounded-4 border-2" style="background:#f8fafc;" placeholder="e.g. Santhosh Kumar">
-                  </div>
-                  
-                  <div class="mb-4">
-                     <label class="form-label small fw-bold text-dim">RESUME (PDF / DOCX)</label>
-                     <div class="p-4 border-2 border-dashed rounded-4 text-center" style="background:#f1f5f9; border-color:#cbd5e1;">
-                        <input type="file" id="dash-cand-resume" accept=".pdf,.docx" hidden onchange="updateFileName('dash-resume-name', this)">
-                        <button class="btn btn-outline-primary btn-sm rounded-pill px-4 mb-2" onclick="document.getElementById('dash-cand-resume').click()">Select Document</button>
-                        <div id="dash-resume-name" class="small fw-bold text-primary"></div>
-                     </div>
-                  </div>
-
-                  <div class="mb-4">
-                     <label class="form-label small fw-bold text-dim">INTERVIEW MEDIA (MP4)</label>
-                     <div class="p-4 border-2 border-dashed rounded-4 text-center" style="background:#f1f5f9; border-color:#cbd5e1;">
-                        <input type="file" id="dash-cand-video" accept="video/*" hidden onchange="updateFileName('dash-video-name', this)">
-                        <button class="btn btn-outline-primary btn-sm rounded-pill px-4 mb-2" onclick="document.getElementById('dash-cand-video').click()">Select Video</button>
-                        <div id="dash-video-name" class="small fw-bold text-primary"></div>
-                     </div>
-                  </div>
-
-                  <button id="dash-finalize-btn" class="btn btn-premium w-100 py-3 rounded-pill fw-bold" onclick="finalizeDashCandidate()">
-                     <i class="bi bi-rocket-takeoff me-2"></i> Analyze Candidate
-                  </button>
-               </div>
-            </div>
-          </div>
-
-          <!-- RIGHT: LIVE ANALYTICS FEED -->
-          <div class="col-lg-7">
-            <div class="m-card h-100">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div class="kpi-title">Live Analysis Feed</div>
-                    <span class="hud-badge">PROCTORING ACTIVE</span>
+    <div class="app-shell">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="brand-section">
+                <div class="brand-id">
+                    <div class="brand-dot"></div>
+                    <span>COGNI.HIRE</span>
                 </div>
-                
-                <div class="table-responsive">
-                    <table class="m-table">
-                        <thead>
-                            <tr>
-                                <th>Candidate</th>
-                                <th>Integrity</th>
-                                <th>Rating</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="dashLeaderboardBody">
-                            <tr><td colspan="4" class="text-center py-5 text-dim italic">Awaiting neural ingestion...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+                <div class="small mt-2" style="color: #4b5563; font-weight:600; font-size:0.65rem;">MNC ENTERPRISE UNIT
+                    · SECURE v4.0</div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- VIEW: ARCHIVE -->
-      <div id="view-history" class="m-view" style="display:none;">
-        <div class="m-card">
-            <div class="d-flex justify-content-between align-items-center mb-5">
-                <div>
-                    <h5 class="text-bright fw-bold">Integrity Archive</h5>
-                    <div class="kpi-title">Global session repository</div>
+            <nav class="nav-group">
+                <div class="nav-btn active" onclick="switchView('view-monitor', event)">
+                    <i class="bi bi-grid-1x2"></i>
+                    <span>Dashboard</span>
                 </div>
-                <div class="d-flex gap-3">
-                    <button class="btn btn-outline-primary rounded-pill px-3 fw-bold btn-sm" onclick="loadGlobalRanking()">
-                        <i class="bi bi-trophy me-1"></i> Rank Candidates
+                <div class="nav-btn"
+                    onclick="switchView('view-history', event); loadDashLeaderboard(); loadHistoryArchive();">
+                    <i class="bi bi-database"></i>
+                    <span>Analysied data</span>
+                </div>
+                <div class="nav-btn" onclick="switchView('view-health', event)">
+                    <i class="bi bi-shield-check"></i>
+                    <span>Neural Node</span>
+                </div>
+                <div class="nav-btn" onclick="switchView('view-settings', event)">
+                    <i class="bi bi-gear"></i>
+                    <span>Global Policy</span>
+                </div>
+                <div class="mt-4 px-3" style="display:none;">
+                    <button class="btn btn-primary w-100 rounded-pill fw-bold" onclick="showAddCandidateModal()">
+                        <i class="bi bi-person-plus-fill me-2"></i> Add Candidate
                     </button>
-                    <input type="text" id="archiveSearch" oninput="searchArchive()" placeholder="Search ID, Candidate or Status..." class="form-control form-control-lg" style="background:rgba(255,255,255,0.03); border:1px solid var(--border-accent); color:#fff; width:350px; font-size:0.9rem; border-radius:12px;">
-                    <button class="btn-premium" onclick="loadHistoryArchive()"><i class="bi bi-arrow-clockwise"></i></button>
+                </div>
+            </nav>
+
+            <div class="mt-auto p-3">
+                <div class="hud-badge w-100" style="background:#111; padding: 12px; border-radius:12px;">
+                    <div class="brand-dot pulse"
+                        style="background:var(--accent-success); box-shadow: 0 0 10px var(--accent-success);"></div>
+                    <div class="ms-2">
+                        <div style="font-size:0.65rem; color:#6b7280; font-weight:700;">NODE CLUSTER</div>
+                        <div style="font-size:0.75rem; color:#fff; font-weight:600;">Singapore (SG-1)</div>
+                    </div>
                 </div>
             </div>
-            <div class="table-responsive">
-                <table class="m-table">
-                    <thead>
-                        <tr>
-                            <th>Trace ID</th>
-                            <th>Global Verdict</th>
-                            <th>Dominant Emotion</th>
-                            <th>Risk Factors</th>
-                            <th>Ingestion Date</th>
-                            <th>Report</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="historyBody">
-                        <!-- Async injection -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-      </div>
+        </aside>
 
-      <!-- VIEW: HEALTH -->
-      <div id="view-health" class="m-view" style="display:none;">
-         <div class="row g-4">
-            <div class="col-md-6">
-                <div class="m-card">
-                    <div class="kpi-title mb-4">Neural Cluster Clusters</div>
-                    <div class="d-flex flex-column gap-4">
-                        <div class="d-flex justify-content-between">
-                            <span class="text-bright">Inference Node A (Primary)</span>
-                            <span class="status-chip bg-success text-dark">OPERATIONAL</span>
+        <!-- MAIN VIEWPORT -->
+        <main class="viewport">
+            <header class="header-bar">
+                <div class="d-flex align-items-center gap-2">
+                    <span id="breadcrumb" class="text-dim small fw-bold uppercase">HR HUB /</span>
+                    <h4 id="page-title" class="text-bright fw-bold mb-0 ms-2">Intake Dashboard</h4>
+                </div>
+                <div class="d-flex gap-4">
+                    <div class="d-flex flex-column text-end">
+                        <span class="small fw-bold text-dim">INF. LATENCY</span>
+                        <span class="text-bright font-monospace small">18.4ms</span>
+                    </div>
+                    <div style="width:1px; background:var(--border-accent);"></div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="text-end">
+                            <div class="text-bright small fw-bold">Admin Core</div>
+                            <div class="text-dim" style="font-size:0.65rem;">MNC-004192-X</div>
                         </div>
-                        <div class="d-flex justify-content-between">
-                            <span class="text-bright">Cognitive Model V4</span>
-                            <span class="status-chip bg-success text-dark">HEALTHY</span>
+                        <div
+                            style="width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg, #1e293b, #0f172a); border:1px solid var(--border-accent);">
                         </div>
-                        <div class="d-flex justify-content-between">
-                            <span class="text-bright">GPU Core Utilization</span>
-                            <span class="status-chip bg-warning text-dark">CPU FALLBACK</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="page-content view-fade">
+
+                <!-- VIEW: MONITOR -->
+                <div id="view-monitor" class="m-view active">
+                    <div class="row g-4">
+
+                        <div class="col-lg-8 mx-auto">
+                            <div className="m-card p-5 border-2 border-primary-mnc shadow-lg">
+                                <div class="d-flex align-items-center gap-3 mb-4">
+                                    <div class="brand-dot" style="width:10px; height:10px;"></div>
+                                    <h6 class="text-bright fw-bold mb-0 uppercase tracking-widest"
+                                        style="font-size:0.75rem;">New Candidate Onboarding</h6>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <div class="mb-4">
+                                        <label class="form-label small fw-bold text-dim">FULL NAME</label>
+                                        <input type="text" id="dash-cand-name"
+                                            class="form-control form-control-lg rounded-4 border-2"
+                                            style="background:#f8fafc;" placeholder="e.g. Santhosh Kumar">
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <label class="form-label small fw-bold text-dim uppercase tracking-widest"
+                                            style="font-size:0.65rem;">Job Role Selection</label>
+                                        <select id="dash-cand-role"
+                                            class="form-select form-select-lg rounded-4 border-2"
+                                            style="background:#f8fafc; font-weight:600; color:#0f172a;">
+                                            <option value="IT / Software Jobs">IT / Software Jobs</option>
+                                            <option value="Corporate / Management Roles">Corporate / Management Roles
+                                            </option>
+                                            <option value="Sales & Marketing Jobs">Sales & Marketing Jobs</option>
+                                            <option value="Core / Technical Jobs (Non-IT)">Core / Technical Jobs
+                                                (Non-IT)</option>
+                                            <option value="Finance & Accounting Jobs">Finance & Accounting Jobs</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <label class="form-label small fw-bold text-dim uppercase tracking-widest"
+                                            style="font-size:0.65rem;">RESUME (PDF / DOCX)</label>
+                                        <div class="p-4 border-2 border-dashed rounded-4 text-center"
+                                            style="background:#f1f5f9; border-color:#cbd5e1;">
+                                            <input type="file" id="dash-cand-resume" accept=".pdf,.docx" hidden
+                                                onchange="updateFileName('dash-resume-name', this)">
+                                            <button class="btn btn-outline-primary btn-sm rounded-pill px-4 mb-2"
+                                                onclick="document.getElementById('dash-cand-resume').click()">Select
+                                                Document</button>
+                                            <div id="dash-resume-name" class="small fw-bold text-primary"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <label class="form-label small fw-bold text-dim">INTERVIEW MEDIA (MP4)</label>
+                                        <div class="p-4 border-2 border-dashed rounded-4 text-center"
+                                            style="background:#f1f5f9; border-color:#cbd5e1;">
+                                            <input type="file" id="dash-cand-video" accept="video/*" hidden
+                                                onchange="updateFileName('dash-video-name', this)">
+                                            <button class="btn btn-outline-primary btn-sm rounded-pill px-4 mb-2"
+                                                onclick="document.getElementById('dash-cand-video').click()">Select
+                                                Video</button>
+                                            <div id="dash-video-name" class="small fw-bold text-primary"></div>
+                                        </div>
+                                    </div>
+
+                                    <button id="dash-finalize-btn"
+                                        class="btn btn-premium w-100 py-3 rounded-pill fw-bold"
+                                        onclick="finalizeDashCandidate()">
+                                        <i class="bi bi-rocket-takeoff me-2"></i> Analyze Candidate
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: ARCHIVE -->
+                <div id="view-history" class="m-view" style="display:none;">
+                    <div class="d-flex justify-content-between align-items-center mb-5">
+                        <div>
+                            <h4 class="text-bright fw-bold mb-1">Analysied datas</h4>
+                            <div class="kpi-title">Global session repository & Ranked Leaderboard</div>
+                        </div>
+                        <div class="d-flex gap-3">
+                            <input type="text" id="archiveSearch" oninput="searchArchive()"
+                                placeholder="Search ID, Candidate or Status..." class="form-control form-control-lg"
+                                style="background:rgba(255,255,255,0.03); border:1px solid var(--border-accent); color:#fff; width:350px; font-size:0.9rem; border-radius:12px;">
+                            <button class="btn-premium" onclick="loadHistoryArchive()"><i
+                                    class="bi bi-arrow-clockwise"></i></button>
+                        </div>
+                    </div>
+
+
+                    <div class="m-card mb-5 border border-primary-mnc shadow-lg"
+                        style="background: rgba(79, 70, 229, 0.02); border-radius: 24px;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h5 class="text-bright fw-bold mb-0">Best-Fit Performance Ranking</h5>
+                                <div class="text-dim x-small italic">Neural calculation based on technical efficacy,
+                                    integrity, and communication depth.</div>
+                            </div>
+                            <button class="btn btn-link btn-sm text-dim p-0" onclick="loadDashLeaderboard()">REFRESH
+                                RANKINGS</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="m-table">
+                                <thead>
+                                    <tr>
+                                        <th>Rank / Candidate</th>
+                                        <th>Overall Fit Score</th>
+                                        <th>Analysis Rating</th>
+                                        <th>Verification</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashLeaderboardBody">
+                                    <tr>
+                                        <td colspan="4" class="text-center py-5 text-dim italic">Awaiting neural data
+                                            synchronization...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="kpi-title mb-3">Historical Sessions Archive</div>
+                    <div class="table-responsive">
+                        <table class="m-table">
+                            <thead>
+                                <tr>
+                                    <th>Trace ID</th>
+                                    <th>Global Verdict</th>
+                                    <th>Dominant Emotion</th>
+                                    <th>Risk Factors</th>
+                                    <th>Ingestion Date</th>
+                                    <th>Report</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyBody">
+                                <!-- Async injection -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: HEALTH -->
+            <div id="view-health" class="m-view" style="display:none;">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="m-card">
+                            <div class="kpi-title mb-4">Neural Cluster Clusters</div>
+                            <div class="d-flex flex-column gap-4">
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-bright">Inference Node A (Primary)</span>
+                                    <span class="status-chip bg-success text-dark">OPERATIONAL</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-bright">Cognitive Model V4</span>
+                                    <span class="status-chip bg-success text-dark">HEALTHY</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-bright">GPU Core Utilization</span>
+                                    <span class="status-chip bg-warning text-dark">CPU FALLBACK</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="m-card">
+                            <canvas id="loadChart" height="200"></canvas>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="m-card">
-                    <canvas id="loadChart" height="200"></canvas>
+
+    </div>
+    </main>
+    </div>
+
+    <!-- MNC DELETE MODAL -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background:#fff; border:none; border-radius:24px; color:#1e293b;">
+                <div class="modal-header border-0 p-4">
+                    <h5 class="modal-title fw-bold">Purge Session?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 pt-0">
+                    <p class="text-dim">This action is irreversible. All behavioral data for this candidate will be
+                        permanently deleted from the global cluster.</p>
+                    <div class="d-flex gap-3 mt-4">
+                        <button type="button" class="btn btn-light rounded-pill px-4 w-100 fw-bold"
+                            data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" id="confirmDeleteBtn"
+                            class="btn btn-danger rounded-pill px-4 w-100 fw-bold">Confirm Purge</button>
+                    </div>
                 </div>
             </div>
-         </div>
-      </div>
-
+        </div>
     </div>
-  </main>
-</div>
-
-<!-- MNC DELETE MODAL -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="background:#fff; border:none; border-radius:24px; color:#1e293b;">
-      <div class="modal-header border-0 p-4">
-        <h5 class="modal-title fw-bold">Purge Session?</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4 pt-0">
-        <p class="text-dim">This action is irreversible. All behavioral data for this candidate will be permanently deleted from the global cluster.</p>
-        <div class="d-flex gap-3 mt-4">
-            <button type="button" class="btn btn-light rounded-pill px-4 w-100 fw-bold" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" id="confirmDeleteBtn" class="btn btn-danger rounded-pill px-4 w-100 fw-bold">Confirm Purge</button>
+    <!-- MNC DRILL-DOWN MODAL -->
+    <div class="modal fade" id="drilldownModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content"
+                style="background:#0c0f14; border:1px solid var(--border-accent); border-radius:24px; color:var(--text-dim);">
+                <div class="modal-header border-0 p-4">
+                    <h5 class="modal-title text-bright fw-bold">Neural Inspection Report</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 pt-0" id="drilldownBody">
+                    <!-- Injected -->
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
-</div>
-<!-- MNC DRILL-DOWN MODAL -->
-<div class="modal fade" id="drilldownModal" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content" style="background:#0c0f14; border:1px solid var(--border-accent); border-radius:24px; color:var(--text-dim);">
-      <div class="modal-header border-0 p-4">
-        <h5 class="modal-title text-bright fw-bold">Neural Inspection Report</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4 pt-0" id="drilldownBody">
-        <!-- Injected -->
-      </div>
+
+    <!-- ADD CANDIDATE MULTI-STEP MODAL -->
+    <div class="modal fade" id="addCandidateModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content"
+                style="background:#fff; border:none; border-radius:24px; color:#1e293b; overflow:hidden;">
+                <div class="modal-header border-0 p-4 pb-0">
+                    <h5 class="fw-bold text-bright"><i class="bi bi-person-plus text-primary me-2"></i>New Candidate
+                        Onboarding</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- Progress Stepper -->
+                    <div class="d-flex justify-content-between mb-5 px-4 position-relative">
+                        <div
+                            style="position:absolute; top:15px; left:10%; right:10%; height:2px; background:#e2e8f0; z-index:1;">
+                        </div>
+                        <div id="step-line-progress"
+                            style="position:absolute; top:15px; left:10%; width:0%; height:2px; background:var(--accent-primary); z-index:2; transition: width 0.4s;">
+                        </div>
+
+                        <div class="text-center" style="z-index:3; width:80px;">
+                            <div id="step-dot-1"
+                                class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto shadow-sm"
+                                style="width:32px; height:32px; font-weight:700;">1</div>
+                            <div class="small mt-2 fw-bold text-bright">Identity</div>
+                        </div>
+                        <div class="text-center" style="z-index:3; width:80px;">
+                            <div id="step-dot-2"
+                                class="rounded-circle bg-light text-dim d-flex align-items-center justify-content-center mx-auto"
+                                style="width:32px; height:32px; font-weight:700; border:2px solid #e2e8f0;">2</div>
+                            <div class="small mt-2 fw-bold text-dim" id="step-label-2">Documents</div>
+                        </div>
+                        <div class="text-center" style="z-index:3; width:80px;">
+                            <div id="step-dot-3"
+                                class="rounded-circle bg-light text-dim d-flex align-items-center justify-content-center mx-auto"
+                                style="width:32px; height:32px; font-weight:700; border:2px solid #e2e8f0;">3</div>
+                            <div class="small mt-2 fw-bold text-dim" id="step-label-3">Intelligence</div>
+                        </div>
+                    </div>
+
+                    <!-- Step Content -->
+                    <div id="step-1-content">
+                        <h6 class="fw-bold mb-3">Candidate Information</h6>
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-dim">FULL NAME</label>
+                            <input type="text" id="cand-name" class="form-control form-control-lg rounded-4 border-2"
+                                placeholder="e.g. Alexander Pierce">
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-dim">TARGET JOB ROLE</label>
+                            <select id="cand-role" class="form-select form-select-lg rounded-4 border-2"
+                                style="font-weight:600;">
+                                <option value="IT / Software Jobs">IT / Software Jobs</option>
+                                <option value="Corporate / Management Roles">Corporate / Management Roles</option>
+                                <option value="Sales & Marketing Jobs">Sales & Marketing Jobs</option>
+                                <option value="Core / Technical Jobs (Non-IT)">Core / Technical Jobs (Non-IT)</option>
+                                <option value="Finance & Accounting Jobs">Finance & Accounting Jobs</option>
+                            </select>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button class="btn btn-primary rounded-pill px-5 fw-bold" onclick="nextStep(2)">Initialize
+                                Profile <i class="bi bi-arrow-right ms-2"></i></button>
+                        </div>
+                    </div>
+
+                    <div id="step-2-content" style="display:none;">
+                        <h6 class="fw-bold mb-3">Professional Documentation</h6>
+                        <p class="text-dim small mb-4">Upload the candidate's core resume (PDF) for neural skill
+                            cross-referencing.</p>
+                        <div class="mb-4 text-center p-5 border-2 border-dashed rounded-4"
+                            style="background:#f8fafc; border-color:#cbd5e1;">
+                            <i class="bi bi-file-earmark-pdf text-primary mb-3 d-block" style="font-size:3rem;"></i>
+                            <input type="file" id="cand-resume" class="form-control" accept=".pdf,.docx" hidden
+                                onchange="updateFileName('resume-name', this)">
+                            <button class="btn btn-outline-primary btn-sm rounded-pill px-4"
+                                onclick="document.getElementById('cand-resume').click()">Select PDF/DOCX
+                                Archive</button>
+                            <div id="resume-name" class="mt-3 small fw-bold text-primary"></div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <button class="btn btn-light rounded-pill px-4 fw-bold" onclick="prevStep(1)">Back</button>
+                            <button class="btn btn-primary rounded-pill px-5 fw-bold" onclick="nextStep(3)">Upload &
+                                Continue <i class="bi bi-arrow-right ms-2"></i></button>
+                        </div>
+                    </div>
+
+                    <div id="step-3-content" style="display:none;">
+                        <h6 class="fw-bold mb-3">Neural Ingestion (Interview)</h6>
+                        <p class="text-dim small mb-4">Select the MP4 interview recording for real-time behavior and
+                            technical analysis.</p>
+                        <div class="mb-4 text-center p-5 border-2 border-dashed rounded-4"
+                            style="background:#f8fafc; border-color:#cbd5e1;">
+                            <i class="bi bi-camera-video text-indigo mb-3 d-block" style="font-size:3rem;"></i>
+                            <input type="file" id="cand-video" class="form-control" accept="video/*" hidden
+                                onchange="updateFileName('video-name', this)">
+                            <button class="btn btn-outline-primary btn-sm rounded-pill px-4"
+                                onclick="document.getElementById('cand-video').click()">Select Session Media</button>
+                            <div id="video-name" class="mt-3 small fw-bold text-primary"></div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <button class="btn btn-light rounded-pill px-4 fw-bold" onclick="prevStep(2)">Back</button>
+                            <button id="finalize-btn" class="btn btn-primary rounded-pill px-5 fw-bold"
+                                onclick="finalizeCandidate()">Finalize Ingestion <i
+                                    class="bi bi-rocket-takeoff ms-2"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Loader Overlay -->
+                    <div id="cand-loader" class="text-center py-5" style="display:none;">
+                        <div class="spinner-border text-primary mb-3" style="width:3rem; height:3rem;"></div>
+                        <div class="fw-bold text-bright" id="loader-msg">ORCHESTRATING NEURAL NODES...</div>
+                        <div class="text-dim small mt-2">This may take a moment. Do not close this terminal.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
 
-<!-- ADD CANDIDATE MULTI-STEP MODAL -->
-<div class="modal fade" id="addCandidateModal" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content" style="background:#fff; border:none; border-radius:24px; color:#1e293b; overflow:hidden;">
-      <div class="modal-header border-0 p-4 pb-0">
-        <h5 class="fw-bold text-bright"><i class="bi bi-person-plus text-primary me-2"></i>New Candidate Onboarding</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4">
-        <!-- Progress Stepper -->
-        <div class="d-flex justify-content-between mb-5 px-4 position-relative">
-            <div style="position:absolute; top:15px; left:10%; right:10%; height:2px; background:#e2e8f0; z-index:1;"></div>
-            <div id="step-line-progress" style="position:absolute; top:15px; left:10%; width:0%; height:2px; background:var(--accent-primary); z-index:2; transition: width 0.4s;"></div>
-            
-            <div class="text-center" style="z-index:3; width:80px;">
-                <div id="step-dot-1" class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto shadow-sm" style="width:32px; height:32px; font-weight:700;">1</div>
-                <div class="small mt-2 fw-bold text-bright">Identity</div>
-            </div>
-            <div class="text-center" style="z-index:3; width:80px;">
-                <div id="step-dot-2" class="rounded-circle bg-light text-dim d-flex align-items-center justify-content-center mx-auto" style="width:32px; height:32px; font-weight:700; border:2px solid #e2e8f0;">2</div>
-                <div class="small mt-2 fw-bold text-dim" id="step-label-2">Documents</div>
-            </div>
-            <div class="text-center" style="z-index:3; width:80px;">
-                <div id="step-dot-3" class="rounded-circle bg-light text-dim d-flex align-items-center justify-content-center mx-auto" style="width:32px; height:32px; font-weight:700; border:2px solid #e2e8f0;">3</div>
-                <div class="small mt-2 fw-bold text-dim" id="step-label-3">Intelligence</div>
-            </div>
-        </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let emotionChart = null;
+        let archiveData = [];
 
-        <!-- Step Content -->
-        <div id="step-1-content">
-            <h6 class="fw-bold mb-3">Candidate Information</h6>
-            <div class="mb-4">
-                <label class="form-label small fw-bold text-dim">FULL NAME</label>
-                <input type="text" id="cand-name" class="form-control form-control-lg rounded-4 border-2" placeholder="e.g. Alexander Pierce">
-            </div>
-            <div class="d-flex justify-content-end">
-                <button class="btn btn-primary rounded-pill px-5 fw-bold" onclick="nextStep(2)">Initialize Profile <i class="bi bi-arrow-right ms-2"></i></button>
-            </div>
-        </div>
-
-        <div id="step-2-content" style="display:none;">
-            <h6 class="fw-bold mb-3">Professional Documentation</h6>
-            <p class="text-dim small mb-4">Upload the candidate's core resume (PDF) for neural skill cross-referencing.</p>
-            <div class="mb-4 text-center p-5 border-2 border-dashed rounded-4" style="background:#f8fafc; border-color:#cbd5e1;">
-                <i class="bi bi-file-earmark-pdf text-primary mb-3 d-block" style="font-size:3rem;"></i>
-                <input type="file" id="cand-resume" class="form-control" accept=".pdf,.docx" hidden onchange="updateFileName('resume-name', this)">
-                <button class="btn btn-outline-primary btn-sm rounded-pill px-4" onclick="document.getElementById('cand-resume').click()">Select PDF/DOCX Archive</button>
-                <div id="resume-name" class="mt-3 small fw-bold text-primary"></div>
-            </div>
-            <div class="d-flex justify-content-between">
-                <button class="btn btn-light rounded-pill px-4 fw-bold" onclick="prevStep(1)">Back</button>
-                <button class="btn btn-primary rounded-pill px-5 fw-bold" onclick="nextStep(3)">Upload & Continue <i class="bi bi-arrow-right ms-2"></i></button>
-            </div>
-        </div>
-
-        <div id="step-3-content" style="display:none;">
-            <h6 class="fw-bold mb-3">Neural Ingestion (Interview)</h6>
-            <p class="text-dim small mb-4">Select the MP4 interview recording for real-time behavior and technical analysis.</p>
-            <div class="mb-4 text-center p-5 border-2 border-dashed rounded-4" style="background:#f8fafc; border-color:#cbd5e1;">
-                <i class="bi bi-camera-video text-indigo mb-3 d-block" style="font-size:3rem;"></i>
-                <input type="file" id="cand-video" class="form-control" accept="video/*" hidden onchange="updateFileName('video-name', this)">
-                <button class="btn btn-outline-primary btn-sm rounded-pill px-4" onclick="document.getElementById('cand-video').click()">Select Session Media</button>
-                <div id="video-name" class="mt-3 small fw-bold text-primary"></div>
-            </div>
-            <div class="d-flex justify-content-between">
-                <button class="btn btn-light rounded-pill px-4 fw-bold" onclick="prevStep(2)">Back</button>
-                <button id="finalize-btn" class="btn btn-primary rounded-pill px-5 fw-bold" onclick="finalizeCandidate()">Finalize Ingestion <i class="bi bi-rocket-takeoff ms-2"></i></button>
-            </div>
-        </div>
-
-        <!-- Loader Overlay -->
-        <div id="cand-loader" class="text-center py-5" style="display:none;">
-            <div class="spinner-border text-primary mb-3" style="width:3rem; height:3rem;"></div>
-            <div class="fw-bold text-bright" id="loader-msg">ORCHESTRATING NEURAL NODES...</div>
-            <div class="text-dim small mt-2">This may take a moment. Do not close this terminal.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    let emotionChart = null;
-    let archiveData = [];
-
-    // Switch View Logic
-    function switchView(viewId, event) {
-        document.querySelectorAll('.m-view').forEach(v => {
-            v.classList.remove('active');
-            // Small delay to allow 'display none' if needed, but here we use classes
-            setTimeout(() => { if(!v.classList.contains('active')) v.style.display = 'none'; }, 400);
-        });
-        
-        const target = document.getElementById(viewId);
-        target.style.display = 'block';
-        setTimeout(() => target.classList.add('active'), 10);
-
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        if(event) {
-            event.currentTarget.classList.add('active');
-            document.getElementById('page-title').innerText = event.currentTarget.innerText;
-        } else {
-            document.getElementById('page-title').innerText = "Overview";
-        }
-    }
-
-    // Candidate Multi-step Modal
-    const addModal = new bootstrap.Modal(document.getElementById('addCandidateModal'));
-    let currentCid = null;
-
-    function showAddCandidateModal() {
-        // Reset state
-        document.getElementById('cand-name').value = '';
-        document.getElementById('cand-resume').value = '';
-        document.getElementById('cand-video').value = '';
-        document.getElementById('resume-name').innerText = '';
-        document.getElementById('video-name').innerText = '';
-        currentCid = null;
-        prevStep(1);
-        addModal.show();
-    }
-
-    function updateFileName(id, input) {
-        if(input.files && input.files[0]) {
-            document.getElementById(id).innerText = "Selected: " + input.files[0].name;
-        }
-    }
-
-    function nextStep(step) {
-        if(step === 2) {
-            const name = document.getElementById('cand-name').value;
-            if(!name) return alert("Please enter candidate name.");
-        }
-        
-        [1,2,3].forEach(s => document.getElementById(`step-${s}-content`).style.display = 'none');
-        document.getElementById(`step-${step}-content`).style.display = 'block';
-        
-        // Update Dots
-        const dots = [1,2,3];
-        dots.forEach(d => {
-            const dot = document.getElementById(`step-dot-${d}`);
-            const label = document.getElementById(`step-label-${d}`);
-            if(d < step) {
-                dot.className = "rounded-circle bg-success text-white d-flex align-items-center justify-content-center mx-auto shadow-sm";
-                dot.innerHTML = '<i class="bi bi-check-lg"></i>';
-                if(label) label.className = "small mt-2 fw-bold text-success";
-            } else if (d === step) {
-                dot.className = "rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto shadow-sm";
-                dot.innerHTML = d;
-                if(label) label.className = "small mt-2 fw-bold text-bright";
-            } else {
-                dot.className = "rounded-circle bg-light text-dim d-flex align-items-center justify-content-center mx-auto";
-                dot.innerHTML = d;
-                if(label) label.className = "small mt-2 fw-bold text-dim";
-                dot.style.border = "2px solid #e2e8f0";
-            }
-        });
-        
-        document.getElementById('step-line-progress').style.width = ((step-1)/2 * 80) + "%";
-    }
-
-    async function finalizeDashCandidate() {
-        const name = document.getElementById('dash-cand-name').value;
-        const resumeFile = document.getElementById('dash-cand-resume').files[0];
-        const videoFile = document.getElementById('dash-cand-video').files[0];
-
-        if(!name) return alert("Candidate name is required.");
-        if(!videoFile) return alert("Interview video is mandatory for analysis.");
-
-        const btn = document.getElementById('dash-finalize-btn');
-        const originalText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>NEURAL INGESTION IN PROGRESS...';
-
-        try {
-            // 1. Create
-            const createResp = await fetch("/api/candidate/create", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: name })
+        // Switch View Logic
+        function switchView(viewId, event) {
+            document.querySelectorAll('.m-view').forEach(v => {
+                v.classList.remove('active');
+                // Small delay to allow 'display none' if needed, but here we use classes
+                setTimeout(() => { if (!v.classList.contains('active')) v.style.display = 'none'; }, 400);
             });
-            const { candidate_id } = await createResp.json();
 
-            // 2. Resume
-            if(resumeFile) {
-                await uploadResume(candidate_id, resumeFile);
+            const target = document.getElementById(viewId);
+            target.style.display = 'block';
+            setTimeout(() => target.classList.add('active'), 10);
+
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            if (event) {
+                event.currentTarget.classList.add('active');
+                document.getElementById('page-title').innerText = event.currentTarget.innerText;
+            } else {
+                document.getElementById('page-title').innerText = "Overview";
             }
-
-            // 3. Video
-            const videoFormData = new FormData();
-            videoFormData.append("candidate_id", candidate_id);
-            videoFormData.append("candidate_name", name);
-            videoFormData.append("video", videoFile);
-            await fetch("/analyze", { method: "POST", body: videoFormData });
-
-            alert("NEURAL SYNC COMPLETE: Candidate indexed successfully.");
-            document.getElementById('dash-cand-name').value = '';
-            document.getElementById('dash-cand-resume').value = '';
-            document.getElementById('dash-cand-video').value = '';
-            document.getElementById('dash-resume-name').innerText = '';
-            document.getElementById('dash-video-name').innerText = '';
-            
-            loadDashLeaderboard();
-        } catch (e) {
-            alert("SYNC ERROR: " + e.message);
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
         }
-    }
 
-    async function loadDashLeaderboard() {
-        try {
-            const resp = await fetch("/results");
-            const { results } = await resp.json();
-            const body = document.getElementById('dashLeaderboardBody');
-            body.innerHTML = '';
+        // Candidate Multi-step Modal
+        const addModal = new bootstrap.Modal(document.getElementById('addCandidateModal'));
+        let currentCid = null;
 
-            const processed = results.filter(r => r.status === "Processed").reverse().slice(0, 10);
-            
-            if(processed.length === 0) {
-                body.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-dim italic">No processed candidates found.</td></tr>';
-                return;
+        function showAddCandidateModal() {
+            // Reset state
+            document.getElementById('cand-name').value = '';
+            document.getElementById('cand-resume').value = '';
+            document.getElementById('cand-video').value = '';
+            document.getElementById('resume-name').innerText = '';
+            document.getElementById('video-name').innerText = '';
+            currentCid = null;
+            prevStep(1);
+            addModal.show();
+        }
+
+        function updateFileName(id, input) {
+            if (input.files && input.files[0]) {
+                document.getElementById(id).innerText = "Selected: " + input.files[0].name;
+            }
+        }
+
+        function nextStep(step) {
+            if (step === 2) {
+                const name = document.getElementById('cand-name').value;
+                if (!name) return alert("Please enter candidate name.");
             }
 
-            for(let res of processed) {
-                const tr = document.createElement('tr');
-                const rating = res.integrity_index > 80 ? 'CLEAN' : 'FLAGGED';
-                const chipClass = res.integrity_index > 80 ? 'bg-success-mnc' : 'bg-danger-mnc';
+            [1, 2, 3].forEach(s => document.getElementById(`step-${s}-content`).style.display = 'none');
+            document.getElementById(`step-${step}-content`).style.display = 'block';
 
-                tr.innerHTML = `
+            // Update Dots
+            const dots = [1, 2, 3];
+            dots.forEach(d => {
+                const dot = document.getElementById(`step-dot-${d}`);
+                const label = document.getElementById(`step-label-${d}`);
+                if (d < step) {
+                    dot.className = "rounded-circle bg-success text-white d-flex align-items-center justify-content-center mx-auto shadow-sm";
+                    dot.innerHTML = '<i class="bi bi-check-lg"></i>';
+                    if (label) label.className = "small mt-2 fw-bold text-success";
+                } else if (d === step) {
+                    dot.className = "rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto shadow-sm";
+                    dot.innerHTML = d;
+                    if (label) label.className = "small mt-2 fw-bold text-bright";
+                } else {
+                    dot.className = "rounded-circle bg-light text-dim d-flex align-items-center justify-content-center mx-auto";
+                    dot.innerHTML = d;
+                    if (label) label.className = "small mt-2 fw-bold text-dim";
+                    dot.style.border = "2px solid #e2e8f0";
+                }
+            });
+
+            document.getElementById('step-line-progress').style.width = ((step - 1) / 2 * 80) + "%";
+        }
+
+        async function finalizeDashCandidate() {
+            const name = document.getElementById('dash-cand-name').value;
+            const resumeFile = document.getElementById('dash-cand-resume').files[0];
+            const videoFile = document.getElementById('dash-cand-video').files[0];
+
+            if (!name) return alert("Candidate name is required.");
+            if (!videoFile) return alert("Interview video is mandatory for analysis.");
+
+            const btn = document.getElementById('dash-finalize-btn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>NEURAL INGESTION IN PROGRESS...';
+
+            try {
+                // 1. Create
+                const createResp = await fetch("/api/candidate/create", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: name })
+                });
+                const { candidate_id } = await createResp.json();
+
+                // 2. Resume
+                if (resumeFile) {
+                    const role = document.getElementById('dash-cand-role').value;
+                    await uploadResume(candidate_id, resumeFile, role);
+                }
+
+                // 3. Video
+                const videoFormData = new FormData();
+                videoFormData.append("candidate_id", candidate_id);
+                videoFormData.append("candidate_name", name);
+                videoFormData.append("video", videoFile);
+                await fetch("/analyze", { method: "POST", body: videoFormData });
+
+                alert("NEURAL SYNC COMPLETE: Candidate indexed successfully.");
+                document.getElementById('dash-cand-name').value = '';
+                document.getElementById('dash-cand-resume').value = '';
+                document.getElementById('dash-cand-video').value = '';
+                document.getElementById('dash-resume-name').innerText = '';
+                document.getElementById('dash-video-name').innerText = '';
+
+                loadDashLeaderboard();
+            } catch (e) {
+                alert("SYNC ERROR: " + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        async function loadDashLeaderboard() {
+            try {
+                const resp = await fetch("/results");
+                const { results } = await resp.json();
+                const body = document.getElementById('dashLeaderboardBody');
+                body.innerHTML = '';
+
+                // Sort all processed candidates by final_score descending
+                const processed = results
+                    .filter(r => r.status === "Processed")
+                    .sort((a, b) => (b.final_score || 0) - (a.final_score || 0))
+                    .slice(0, 10);
+
+                if (processed.length === 0) {
+                    body.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-dim italic">No processed candidates found.</td></tr>';
+                    return;
+                }
+
+                processed.forEach((res, index) => {
+                    const tr = document.createElement('tr');
+                    const profile = res.resume_profile || {};
+                    const rating = profile.selection_status || 'PENDING';
+                    const chipClass = rating === 'SELECTED' ? 'bg-success-mnc' : 'bg-danger-mnc';
+
+                    // Professional Rank Badges
+                    let rankBadge = '';
+                    if (index === 0) rankBadge = '<span class="badge bg-warning text-dark me-2" style="font-size:0.6rem;">#1 GOLD</span>';
+                    else if (index === 1) rankBadge = '<span class="badge bg-secondary text-white me-2" style="font-size:0.6rem;">#2 SILVER</span>';
+                    else if (index === 2) rankBadge = '<span class="badge bg-bronze text-white me-2" style="font-size:0.6rem; background:#cd7f32;">#3 BRONZE</span>';
+                    else rankBadge = `<span class="text-dim small me-2" style="font-size:0.65rem;">#${index + 1}</span>`;
+
+                    tr.innerHTML = `
                     <td>
-                        <div class="fw-bold text-bright">${res.candidate_name || 'Anonymous'}</div>
-                        <div class="text-dim small" style="font-size:0.65rem;">ID: ${res._id.substring(0,8)}...</div>
+                        <div class="flex items-center">
+                            <div class="me-3">${rankBadge}</div>
+                            <div>
+                                <div class="fw-bold text-bright">${res.candidate_name || 'Anonymous'}</div>
+                                <div class="text-dim small" style="font-size:0.65rem;">ID: ${res._id.substring(0, 8)}... | ${res.selected_role || 'General'}</div>
+                            </div>
+                        </div>
                     </td>
-                    <td><div class="font-monospace fw-bold">${Math.round(res.integrity_index || 0)}%</div></td>
+                    <td>
+                        <div class="font-monospace fw-bold">${Math.round(res.final_score || 0)}%</div>
+                        <div style="font-size:0.6rem; color:#6366f1;">Fit: ${profile.role_fit_score || 0}/10</div>
+                    </td>
                     <td><span class="status-chip ${chipClass}">${rating}</span></td>
                     <td>
                         <button class="btn btn-outline-primary btn-sm rounded-pill" onclick="window.open('deepdive.html?id=${res._id}', '_blank')">
@@ -660,254 +1050,256 @@
                         </button>
                     </td>
                 `;
-                body.appendChild(tr);
-            }
-        } catch(e) { console.error("Leaderboard error:", e); }
-    }
+                    body.appendChild(tr);
+                });
+            } catch (e) { console.error("Leaderboard error:", e); }
+        }
 
-    // Initialize Dashboard
-    window.addEventListener('load', () => {
-        loadDashLeaderboard();
-    });
-
-    async function uploadResume(cid, resumeFile) {
-        const resumeFormData = new FormData();
-        resumeFormData.append("candidate_id", cid);
-        resumeFormData.append("file", resumeFile);
-
-        const response = await fetch("/api/resume/upload", { 
-            method: "POST", 
-            body: resumeFormData 
+        // Initialize Dashboard
+        window.addEventListener('load', () => {
+            loadDashLeaderboard();
         });
 
-        if (!response.ok) {
-            const errorBody = await response.text();
-            console.error("SERVER ERROR HTML DETECTED (RESUME UPLOAD):", errorBody);
-            throw new Error(`Resume Upload Failed (${response.status})`);
-        }
-        return await response.json();
-    }
+        async function uploadResume(cid, resumeFile, role) {
+            const resumeFormData = new FormData();
+            resumeFormData.append("candidate_id", cid);
+            resumeFormData.append("file", resumeFile);
+            resumeFormData.append("role", role);
 
-    async function finalizeCandidate() {
-        const name = document.getElementById('cand-name').value;
-        const resumeFile = document.getElementById('cand-resume').files[0];
-        const videoFile = document.getElementById('cand-video').files[0];
-
-        if(!videoFile) return alert("Interview video is mandatory for analysis.");
-
-        // Show Loader
-        [1,2,3].forEach(s => document.getElementById(`step-${s}-content`).style.display = 'none');
-        document.getElementById('cand-loader').style.display = 'block';
-
-        try {
-            // 1. Create Candidate
-            document.getElementById('loader-msg').innerText = "GENERATING IDENTITY TETHER...";
-            const createResp = await fetch("/api/candidate/create", {
+            const response = await fetch("/api/resume/upload", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: name })
+                body: resumeFormData
             });
 
-            if (!createResp.ok) {
-                const errorBody = await createResp.text();
-                console.error("SERVER ERROR HTML DETECTED (CREATE):", errorBody);
-                throw new Error(`Candidate Creation Failed (${createResp.status})`);
+            if (!response.ok) {
+                const errorBody = await response.text();
+                console.error("SERVER ERROR HTML DETECTED (RESUME UPLOAD):", errorBody);
+                throw new Error(`Resume Upload Failed (${response.status})`);
             }
-
-            const createData = await createResp.json();
-            if(!createData.candidate_id) throw new Error("Failed to create candidate");
-            const cid = createData.candidate_id;
-
-            // 2. Upload Resume if exists
-            if(resumeFile) {
-                document.getElementById('loader-msg').innerText = "PARSING NEURAL KNOWLEDGE (RESUME)...";
-                await uploadResume(cid, resumeFile);
-            }
-
-            // 3. Analyze Video
-            document.getElementById('loader-msg').innerText = "EXECUTING BEHAVIORAL ANALYSIS (VIDEO)...";
-            const videoFormData = new FormData();
-            videoFormData.append("candidate_id", cid);
-            videoFormData.append("candidate_name", name);
-            videoFormData.append("video", videoFile);
-            
-            const analyzeResp = await fetch("/analyze", { method: "POST", body: videoFormData });
-            
-            if (!analyzeResp.ok) {
-                const errorBody = await analyzeResp.text();
-                console.error("SERVER ERROR HTML DETECTED (ANALYZE):", errorBody);
-                throw new Error(`Video Analysis Failed (${analyzeResp.status})`);
-            }
-
-            const analyzeData = await analyzeResp.json();
-
-            if(analyzeData.status === "success") {
-                addModal.hide();
-                logAction(`Successfully indexed candidate: ${name}`);
-                // Refresh global ranking
-                loadGlobalRanking();
-            } else {
-                throw new Error(analyzeData.message || "Analysis failure");
-            }
-        } catch (e) {
-            alert("Process Failed: " + e.message);
-            prevStep(3);
-            document.getElementById('cand-loader').style.display = 'none';
+            return await response.json();
         }
-    }
 
-    async function fetchReport(id) {
-        const response = await fetch("/api/report/" + id);
-        if (!response.ok) {
-            const errorBody = await response.text();
-            console.error("SERVER ERROR HTML DETECTED (REPORT):", errorBody);
-            throw new Error(`Report Retrieval Failed (${response.status})`);
-        }
-        return await response.json();
-    }
+        async function finalizeCandidate() {
+            const name = document.getElementById('cand-name').value;
+            const resumeFile = document.getElementById('cand-resume').files[0];
+            const videoFile = document.getElementById('cand-video').files[0];
 
-    async function loadGlobalRanking() {
-        logAction("Calculating global best-fit rankings...");
-        try {
-            const resp = await fetch("/results");
-            if (!resp.ok) throw new Error(`Results Fetch Failed (${resp.status})`);
-            
-            const data = await resp.json();
-             if(data && Array.isArray(data.results)) {
-                const results = [];
-                for(let row of data.results) {
-                    if(row.status === "Initialized") continue; // Skip incomplete
-                    
-                    try {
-                        const repData = await fetchReport(row._id);
-                        results.push({
-                            file: row.candidate_name || row._id,
-                            analysis: { _id: row._id },
-                            final_score: repData.final_score || 0,
-                            pb: repData.performance_breakdown || {}
-                        });
-                    } catch(e) {
-                        console.warn(`Could not fetch report for ${row._id}:`, e);
-                    }
+            if (!videoFile) return alert("Interview video is mandatory for analysis.");
+
+            // Show Loader
+            [1, 2, 3].forEach(s => document.getElementById(`step-${s}-content`).style.display = 'none');
+            document.getElementById('cand-loader').style.display = 'block';
+
+            try {
+                // 1. Create Candidate
+                document.getElementById('loader-msg').innerText = "GENERATING IDENTITY TETHER...";
+                const createResp = await fetch("/api/candidate/create", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: name })
+                });
+
+                if (!createResp.ok) {
+                    const errorBody = await createResp.text();
+                    console.error("SERVER ERROR HTML DETECTED (CREATE):", errorBody);
+                    throw new Error(`Candidate Creation Failed (${createResp.status})`);
                 }
-                renderLeaderboard(results);
-             }
-        } catch (e) {
-            console.error("Global Ranking Error:", e);
-            logAction("Ranking Error: " + e.message);
+
+                const createData = await createResp.json();
+                if (!createData.candidate_id) throw new Error("Failed to create candidate");
+                const cid = createData.candidate_id;
+
+                // 2. Upload Resume if exists
+                if (resumeFile) {
+                    document.getElementById('loader-msg').innerText = "PARSING NEURAL KNOWLEDGE (RESUME)...";
+                    const role = document.getElementById('cand-role').value;
+                    await uploadResume(cid, resumeFile, role);
+                }
+
+                // 3. Analyze Video
+                document.getElementById('loader-msg').innerText = "EXECUTING BEHAVIORAL ANALYSIS (VIDEO)...";
+                const videoFormData = new FormData();
+                videoFormData.append("candidate_id", cid);
+                videoFormData.append("candidate_name", name);
+                videoFormData.append("video", videoFile);
+
+                const analyzeResp = await fetch("/analyze", { method: "POST", body: videoFormData });
+
+                if (!analyzeResp.ok) {
+                    const errorBody = await analyzeResp.text();
+                    console.error("SERVER ERROR HTML DETECTED (ANALYZE):", errorBody);
+                    throw new Error(`Video Analysis Failed (${analyzeResp.status})`);
+                }
+
+                const analyzeData = await analyzeResp.json();
+
+                if (analyzeData.status === "success") {
+                    addModal.hide();
+                    logAction(`Successfully indexed candidate: ${name}`);
+                    // Refresh global ranking
+                    loadGlobalRanking();
+                } else {
+                    throw new Error(analyzeData.message || "Analysis failure");
+                }
+            } catch (e) {
+                alert("Process Failed: " + e.message);
+                prevStep(3);
+                document.getElementById('cand-loader').style.display = 'none';
+            }
         }
-    }
 
-    // Live Streaming / Analysis
-    const videoSelect = document.getElementById('videoSelect');
-    const videoPreview = document.getElementById('videoPreview');
+        async function fetchReport(id) {
+            const response = await fetch("/api/report/" + id);
+            if (!response.ok) {
+                const errorBody = await response.text();
+                console.error("SERVER ERROR HTML DETECTED (REPORT):", errorBody);
+                throw new Error(`Report Retrieval Failed (${response.status})`);
+            }
+            return await response.json();
+        }
 
-    videoSelect.addEventListener('change', async function() {
-        if(this.files && this.files.length > 0) {
-            const files = Array.from(this.files);
-            const total = files.length;
-            logAction(`Starting bulk ingestion of ${total} media cluster(s)...`);
-            
-            document.getElementById('loader').style.display = 'block';
-            document.getElementById('scan-line').style.display = 'block';
-            document.getElementById('verdictBox').className = "verdict-box v-pending";
-            document.getElementById('verdictBox').innerText = "INGESTING BATCH...";
-            document.getElementById('leaderboardSection').style.display = 'none';
+        async function loadGlobalRanking() {
+            logAction("Calculating global best-fit rankings...");
+            try {
+                const resp = await fetch("/results");
+                if (!resp.ok) throw new Error(`Results Fetch Failed (${resp.status})`);
 
-            const results = [];
-            
-            for (let i = 0; i < total; i++) {
-                const file = files[i];
-                logAction(`Processing ${i+1}/${total}: ${file.name}`);
-                videoPreview.src = URL.createObjectURL(file);
-                document.getElementById('transcriptBox').innerHTML = `<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div><div class="mt-2">Processing ${file.name}...</div></div>`;
+                const data = await resp.json();
+                if (data && Array.isArray(data.results)) {
+                    const results = [];
+                    for (let row of data.results) {
+                        if (row.status === "Initialized") continue; // Skip incomplete
 
-                const formData = new FormData();
-                formData.append("video", file);
-
-                try {
-                    const resp = await fetch("/analyze", { method: "POST", body: formData });
-                    if (!resp.ok) {
-                        const errorBody = await resp.text();
-                        console.error("SERVER ERROR HTML DETECTED (ANALYZE BATCH):", errorBody);
-                        throw new Error(`Analysis Failed (${resp.status})`);
-                    }
-                    const data = await resp.json();
-                    
-                    if (data.status === "success") {
-                        let finalScore = 0;
-                        let pb = { technical: 0, integrity: 0, communication: 0 };
-                        if (data.analysis._id) {
-                            try {
-                                const repData = await fetchReport(data.analysis._id);
-                                finalScore = repData.final_score || 0;
-                                pb = repData.performance_breakdown || pb;
-                                data.analysis.report = repData;
-                            } catch (e) {
-                                console.warn("Report fetch failed for batch item:", e);
-                            }
+                        try {
+                            const repData = await fetchReport(row._id);
+                            results.push({
+                                file: row.candidate_name || row._id,
+                                analysis: { _id: row._id },
+                                final_score: repData.final_score || 0,
+                                pb: repData.performance_breakdown || {}
+                            });
+                        } catch (e) {
+                            console.warn(`Could not fetch report for ${row._id}:`, e);
                         }
-                        
-                        results.push({
-                            file: file.name,
-                            analysis: data.analysis,
-                            final_score: finalScore,
-                            pb: pb
-                        });
-                        // Show last result on main UI
-                        renderMncResults(data.analysis);
-                        logAction(`Analysis complete for ${file.name}`);
-                    } else {
-                        throw new Error(data.message || "Unknown neural processing error.");
                     }
-                } catch (e) {
-                    logAction("NODE ERROR: " + e.message);
-                    if (i === total - 1) { // If it's the last video and failed, show failure on UI
-                        document.getElementById('verdictBox').className = "verdict-box v-flag";
-                        document.getElementById('verdictBox').innerText = "ENGINE FAILURE";
-                        document.getElementById('transcriptBox').innerHTML = `<div class='text-danger'><b>Error Details:</b><br>${e.message}</div>`;
-                    }
-                } // Continue to next video if error happens
-            }
-
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('scan-line').style.display = 'none';
-
-            if (results.length > 0) {
-                renderLeaderboard(results);
+                    renderLeaderboard(results);
+                }
+            } catch (e) {
+                console.error("Global Ranking Error:", e);
+                logAction("Ranking Error: " + e.message);
             }
         }
-    });
 
-    function renderLeaderboard(results) {
-        document.getElementById('leaderboardSection').style.display = 'flex';
-        const tbody = document.getElementById('leaderboardBody');
-        tbody.innerHTML = '';
+        // Live Streaming / Analysis
+        const videoSelect = document.getElementById('videoSelect');
+        const videoPreview = document.getElementById('videoPreview');
 
-        // Sort by final score descending
-        results.sort((a, b) => b.final_score - a.final_score);
+        videoSelect.addEventListener('change', async function () {
+            if (this.files && this.files.length > 0) {
+                const files = Array.from(this.files);
+                const total = files.length;
+                logAction(`Starting bulk ingestion of ${total} media cluster(s)...`);
 
-        results.forEach((item, index) => {
-            const pb = item.pb;
-            const tr = document.createElement('tr');
-            
-            let badge = '';
-            let rowClass = '';
-            let rankLabel = `#${index + 1}`;
-            
-            if (index === 0) {
-                badge = '<span class="status-chip bg-warning text-dark ms-2" style="font-size:0.65rem;"><i class="bi bi-star-fill"></i> BEST MATCH</span>';
-                rowClass = 'style="background: #fcf8e3;"';
-                rankLabel = '<span class="text-warning fw-bold">#1 (Gold)</span>';
-            } else if (index === 1) {
-                rankLabel = '<span class="text-secondary fw-bold">#2 (Silver)</span>';
-            } else if (item.final_score < 60) {
-                rankLabel = `<span class="text-danger fw-bold">#${index + 1} (Review)</span>`;
-            } else if (pb.integrity < 50) {
-                rankLabel = `<span class="text-danger fw-bold">#${index + 1} (Flag)</span>`;
+                document.getElementById('loader').style.display = 'block';
+                document.getElementById('scan-line').style.display = 'block';
+                document.getElementById('verdictBox').className = "verdict-box v-pending";
+                document.getElementById('verdictBox').innerText = "INGESTING BATCH...";
+                document.getElementById('leaderboardSection').style.display = 'none';
+
+                const results = [];
+
+                for (let i = 0; i < total; i++) {
+                    const file = files[i];
+                    logAction(`Processing ${i + 1}/${total}: ${file.name}`);
+                    videoPreview.src = URL.createObjectURL(file);
+                    document.getElementById('transcriptBox').innerHTML = `<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div><div class="mt-2">Processing ${file.name}...</div></div>`;
+
+                    const formData = new FormData();
+                    formData.append("video", file);
+
+                    try {
+                        const resp = await fetch("/analyze", { method: "POST", body: formData });
+                        if (!resp.ok) {
+                            const errorBody = await resp.text();
+                            console.error("SERVER ERROR HTML DETECTED (ANALYZE BATCH):", errorBody);
+                            throw new Error(`Analysis Failed (${resp.status})`);
+                        }
+                        const data = await resp.json();
+
+                        if (data.status === "success") {
+                            let finalScore = 0;
+                            let pb = { technical: 0, integrity: 0, communication: 0 };
+                            if (data.analysis._id) {
+                                try {
+                                    const repData = await fetchReport(data.analysis._id);
+                                    finalScore = repData.final_score || 0;
+                                    pb = repData.performance_breakdown || pb;
+                                    data.analysis.report = repData;
+                                } catch (e) {
+                                    console.warn("Report fetch failed for batch item:", e);
+                                }
+                            }
+
+                            results.push({
+                                file: file.name,
+                                analysis: data.analysis,
+                                final_score: finalScore,
+                                pb: pb
+                            });
+                            // Show last result on main UI
+                            renderMncResults(data.analysis);
+                            logAction(`Analysis complete for ${file.name}`);
+                        } else {
+                            throw new Error(data.message || "Unknown neural processing error.");
+                        }
+                    } catch (e) {
+                        logAction("NODE ERROR: " + e.message);
+                        if (i === total - 1) { // If it's the last video and failed, show failure on UI
+                            document.getElementById('verdictBox').className = "verdict-box v-flag";
+                            document.getElementById('verdictBox').innerText = "ENGINE FAILURE";
+                            document.getElementById('transcriptBox').innerHTML = `<div class='text-danger'><b>Error Details:</b><br>${e.message}</div>`;
+                        }
+                    } // Continue to next video if error happens
+                }
+
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('scan-line').style.display = 'none';
+
+                if (results.length > 0) {
+                    renderLeaderboard(results);
+                }
             }
+        });
 
-            tr.innerHTML = `
+        function renderLeaderboard(results) {
+            document.getElementById('leaderboardSection').style.display = 'flex';
+            const tbody = document.getElementById('leaderboardBody');
+            tbody.innerHTML = '';
+
+            // Sort by final score descending
+            results.sort((a, b) => b.final_score - a.final_score);
+
+            results.forEach((item, index) => {
+                const pb = item.pb;
+                const tr = document.createElement('tr');
+
+                let badge = '';
+                let rowClass = '';
+                let rankLabel = `#${index + 1}`;
+
+                if (index === 0) {
+                    badge = '<span class="status-chip bg-warning text-dark ms-2" style="font-size:0.65rem;"><i class="bi bi-star-fill"></i> BEST MATCH</span>';
+                    rowClass = 'style="background: #fcf8e3;"';
+                    rankLabel = '<span class="text-warning fw-bold">#1 (Gold)</span>';
+                } else if (index === 1) {
+                    rankLabel = '<span class="text-secondary fw-bold">#2 (Silver)</span>';
+                } else if (item.final_score < 60) {
+                    rankLabel = `<span class="text-danger fw-bold">#${index + 1} (Review)</span>`;
+                } else if (pb.integrity < 50) {
+                    rankLabel = `<span class="text-danger fw-bold">#${index + 1} (Flag)</span>`;
+                }
+
+                tr.innerHTML = `
                 <td ${rowClass}><strong>${rankLabel}</strong></td>
                 <td ${rowClass}>${item.file} ${badge}</td>
                 <td ${rowClass}>${pb.technical || 0}%</td>
@@ -918,95 +1310,95 @@
                     <a class="btn btn-link btn-sm text-indigo p-0 fw-bold" href="/deepdive.html?id=${item.analysis._id || ''}" target="_self">DEEP-DIVE</a>
                 </td>
             `;
-            tbody.appendChild(tr);
-        });
-        
-        logAction("Leaderboard generated & ranked.");
-    }
+                tbody.appendChild(tr);
+            });
 
-    function logAction(msg) {
-        const log = document.getElementById('miniLog');
-        const ts = new Date().toLocaleTimeString('en-GB');
-        const div = document.createElement('div');
-        div.className = "console-line";
-        div.innerHTML = `<span class="console-ts">${ts}</span> ${msg}`;
-        log.prepend(div);
-    }
-
-    function renderMncResults(analysis) {
-        if (!analysis || typeof analysis !== 'object') {
-            logAction("DATA ERROR: Incomplete neural payload received.");
-            document.getElementById('verdictBox').className = "verdict-box v-flag";
-            document.getElementById('verdictBox').innerText = "DATA ERROR";
-            return;
+            logAction("Leaderboard generated & ranked.");
         }
 
-        const v = analysis.video || {};
-        const classification = analysis.classification || {};
-        const reasons = Array.isArray(classification.reasons) ? classification.reasons : [];
-        const verdict = classification.verdict || 'Unknown';
-
-        document.getElementById('kpiFaces').innerText = v.multiFaceFrames || 0;
-        document.getElementById('kpiGaze').innerText = Math.round(((v.gazeAwayFrames || 0) / (v.sampledFrames || 1)) * 100) + "%";
-        
-        const vBox = document.getElementById('verdictBox');
-        vBox.innerText = verdict.toUpperCase();
-        vBox.className = "verdict-box " + (verdict === 'Clean' ? 'v-clean' : 'v-flag');
-
-        document.getElementById('transcriptBox').innerText = analysis.transcript || 'No verbal data captured.';
-
-        const emotionProbs = analysis.emotionProbabilities;
-        if (emotionProbs && typeof emotionProbs === 'object' && Object.keys(emotionProbs).length > 0) {
-            renderPremiumChart(emotionProbs);
+        function logAction(msg) {
+            const log = document.getElementById('miniLog');
+            const ts = new Date().toLocaleTimeString('en-GB');
+            const div = document.createElement('div');
+            div.className = "console-line";
+            div.innerHTML = `<span class="console-ts">${ts}</span> ${msg}`;
+            log.prepend(div);
         }
-        logAction("Verdict: " + verdict + " | Flags: " + reasons.length);
-    }
 
-    function renderPremiumChart(probs) {
-        if (!probs || typeof probs !== 'object') return;
-        const ctx = document.getElementById('emotionChart').getContext('2d');
-        if(emotionChart) emotionChart.destroy();
-        emotionChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: Object.keys(probs),
-                datasets: [{
-                    data: Object.values(probs),
-                    backgroundColor: '#4f46e5',
-                    borderRadius: 12
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                maintainAspectRatio: false,
-                plugins: { legend: { display:false } },
-                scales: { 
-                    x: { grid: { color: '#f1f5f9' }, border:{display:false}, ticks:{color:'#64748b'} },
-                    y: { grid: { display: false }, border:{display:false}, ticks:{color:'#0f172a', font:{weight:600}} }
+        function renderMncResults(analysis) {
+            if (!analysis || typeof analysis !== 'object') {
+                logAction("DATA ERROR: Incomplete neural payload received.");
+                document.getElementById('verdictBox').className = "verdict-box v-flag";
+                document.getElementById('verdictBox').innerText = "DATA ERROR";
+                return;
+            }
+
+            const v = analysis.video || {};
+            const classification = analysis.classification || {};
+            const reasons = Array.isArray(classification.reasons) ? classification.reasons : [];
+            const verdict = classification.verdict || 'Unknown';
+
+            document.getElementById('kpiFaces').innerText = v.multiFaceFrames || 0;
+            document.getElementById('kpiGaze').innerText = Math.round(((v.gazeAwayFrames || 0) / (v.sampledFrames || 1)) * 100) + "%";
+
+            const vBox = document.getElementById('verdictBox');
+            vBox.innerText = verdict.toUpperCase();
+            vBox.className = "verdict-box " + (verdict === 'Clean' ? 'v-clean' : 'v-flag');
+
+            document.getElementById('transcriptBox').innerText = analysis.transcript || 'No verbal data captured.';
+
+            const emotionProbs = analysis.emotionProbabilities;
+            if (emotionProbs && typeof emotionProbs === 'object' && Object.keys(emotionProbs).length > 0) {
+                renderPremiumChart(emotionProbs);
+            }
+            logAction("Verdict: " + verdict + " | Flags: " + reasons.length);
+        }
+
+        function renderPremiumChart(probs) {
+            if (!probs || typeof probs !== 'object') return;
+            const ctx = document.getElementById('emotionChart').getContext('2d');
+            if (emotionChart) emotionChart.destroy();
+            emotionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(probs),
+                    datasets: [{
+                        data: Object.values(probs),
+                        backgroundColor: '#4f46e5',
+                        borderRadius: 12
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: '#f1f5f9' }, border: { display: false }, ticks: { color: '#64748b' } },
+                        y: { grid: { display: false }, border: { display: false }, ticks: { color: '#0f172a', font: { weight: 600 } } }
+                    }
                 }
-            }
-        });
-    }
+            });
+        }
 
-    // Archive History
-    async function loadHistoryArchive() {
-        const body = document.getElementById('historyBody');
-        body.innerHTML = '<tr><td colspan="7" class="text-center py-5">Connecting to global archive...</td></tr>';
-        
-        try {
-            const resp = await fetch("/results");
-            
-            if (!resp.ok) {
-                const errorBody = await resp.text();
-                console.error("SERVER ERROR HTML DETECTED (ARCHIVE):", errorBody);
-                throw new Error(`Archive Fetch Failed (${resp.status})`);
-            }
+        // Archive History
+        async function loadHistoryArchive() {
+            const body = document.getElementById('historyBody');
+            body.innerHTML = '<tr><td colspan="7" class="text-center py-5">Connecting to global archive...</td></tr>';
 
-            const data = await resp.json();
+            try {
+                const resp = await fetch("/results");
 
-            if (resp.status === 503 || (data && data.error)) {
-                const errMsg = data?.error || 'Database not available';
-                body.innerHTML = `<tr><td colspan="7" class="text-center py-5">
+                if (!resp.ok) {
+                    const errorBody = await resp.text();
+                    console.error("SERVER ERROR HTML DETECTED (ARCHIVE):", errorBody);
+                    throw new Error(`Archive Fetch Failed (${resp.status})`);
+                }
+
+                const data = await resp.json();
+
+                if (resp.status === 503 || (data && data.error)) {
+                    const errMsg = data?.error || 'Database not available';
+                    body.innerHTML = `<tr><td colspan="7" class="text-center py-5">
                     <div style="color: var(--accent-danger); font-size: 1.5rem; margin-bottom: 12px;">
                         <i class="bi bi-database-x"></i>
                     </div>
@@ -1021,17 +1413,17 @@
                         </button>
                     </div>
                 </td></tr>`;
-                return;
-            }
+                    return;
+                }
 
-            if(data && Array.isArray(data.results)) {
-                archiveData = data.results;
-                renderArchive(archiveData);
-            } else {
-                body.innerHTML = '<tr><td colspan="7" class="text-center py-5">No data available</td></tr>';
-            }
-        } catch (e) {
-            body.innerHTML = `<tr><td colspan="7" class="text-center py-5">
+                if (data && Array.isArray(data.results)) {
+                    archiveData = data.results;
+                    renderArchive(archiveData);
+                } else {
+                    body.innerHTML = '<tr><td colspan="7" class="text-center py-5">No data available</td></tr>';
+                }
+            } catch (e) {
+                body.innerHTML = `<tr><td colspan="7" class="text-center py-5">
                 <div style="color: var(--accent-danger); font-size: 1.5rem; margin-bottom: 12px;">
                     <i class="bi bi-wifi-off"></i>
                 </div>
@@ -1043,26 +1435,26 @@
                     </button>
                 </div>
             </td></tr>`;
+            }
         }
-    }
 
-    function renderArchive(list) {
-        const body = document.getElementById('historyBody');
-        body.innerHTML = '';
-        if (!Array.isArray(list) || list.length === 0) {
-            body.innerHTML = '<tr><td colspan="6" class="text-center py-5">No records found in archive.</td></tr>';
-            return;
-        }
-        list.slice().reverse().forEach(row => {
-            if (!row || typeof row !== 'object') return;
-            const tr = document.createElement('tr');
-            const classification = row.classification || {};
-            const verdict = classification.verdict || 'Unknown';
-            const reasons = Array.isArray(classification.reasons) ? classification.reasons : [];
-            const rowId = row._id || 'N/A';
-            const candName = row.candidate_name || `ID: ${rowId.substring(rowId.length - 6)}`;
-            const vClass = verdict === 'Clean' ? 'bg-success-mnc' : 'bg-danger-mnc';
-            tr.innerHTML = `
+        function renderArchive(list) {
+            const body = document.getElementById('historyBody');
+            body.innerHTML = '';
+            if (!Array.isArray(list) || list.length === 0) {
+                body.innerHTML = '<tr><td colspan="6" class="text-center py-5">No records found in archive.</td></tr>';
+                return;
+            }
+            list.slice().reverse().forEach(row => {
+                if (!row || typeof row !== 'object') return;
+                const tr = document.createElement('tr');
+                const classification = row.classification || {};
+                const verdict = classification.verdict || 'Unknown';
+                const reasons = Array.isArray(classification.reasons) ? classification.reasons : [];
+                const rowId = row._id || 'N/A';
+                const candName = row.candidate_name || `ID: ${rowId.substring(rowId.length - 6)}`;
+                const vClass = verdict === 'Clean' ? 'bg-success-mnc' : 'bg-danger-mnc';
+                tr.innerHTML = `
                 <td class="small fw-bold text-indigo">${candName}</td>
                 <td><span class="status-chip ${vClass}">${verdict.toUpperCase()}</span></td>
                 <td class="text-capitalize fw-600">${row.emotion || 'Not Detected'}</td>
@@ -1071,70 +1463,70 @@
                 <td><a class="btn btn-link btn-sm text-indigo p-0 fw-bold" href="/deepdive.html?id=${rowId}" target="_self">INSPECT Deep-Dive</a></td>
                 <td><button class="btn btn-link btn-sm text-danger p-0 fw-bold" onclick="deleteRecord('${rowId}')">DELETE</button></td>
             `;
-            body.appendChild(tr);
-        });
-    }
+                body.appendChild(tr);
+            });
+        }
 
-    function searchArchive() {
-        const q = document.getElementById('archiveSearch').value.toLowerCase();
-        const filtered = archiveData.filter(d => {
-            if (!d || typeof d !== 'object') return false;
-            const idMatch = d._id ? String(d._id).toLowerCase().includes(q) : false;
-            const verdictMatch = (d.classification && d.classification.verdict) 
-                ? d.classification.verdict.toLowerCase().includes(q) : false;
-            return idMatch || verdictMatch;
-        });
-        renderArchive(filtered);
-    }
+        function searchArchive() {
+            const q = document.getElementById('archiveSearch').value.toLowerCase();
+            const filtered = archiveData.filter(d => {
+                if (!d || typeof d !== 'object') return false;
+                const idMatch = d._id ? String(d._id).toLowerCase().includes(q) : false;
+                const verdictMatch = (d.classification && d.classification.verdict)
+                    ? d.classification.verdict.toLowerCase().includes(q) : false;
+                return idMatch || verdictMatch;
+            });
+            renderArchive(filtered);
+        }
 
-    async function deleteRecord(id) {
-        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-        const confirmBtn = document.getElementById('confirmDeleteBtn');
-        
-        // Use a one-time event listener
-        confirmBtn.onclick = async () => {
-            modal.hide();
+        async function deleteRecord(id) {
+            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
+
+            // Use a one-time event listener
+            confirmBtn.onclick = async () => {
+                modal.hide();
+                try {
+                    const resp = await fetch("/results/" + id, { method: "DELETE" });
+                    if (!resp.ok) {
+                        const errorBody = await resp.text();
+                        console.error("SERVER ERROR HTML DETECTED (DELETE):", errorBody);
+                        throw new Error(`Delete Failed (${resp.status})`);
+                    }
+                    const data = await resp.json();
+                    if (data.status === "success") {
+                        logAction("Session purged successfully.");
+                        loadHistoryArchive();
+                    } else {
+                        alert("Error: " + (data.error || "Neural link failure."));
+                    }
+                } catch (e) {
+                    alert("Network error: " + e.message);
+                }
+            };
+
+            modal.show();
+        }
+
+        async function drilldown(id) {
+            const modal = new bootstrap.Modal(document.getElementById('drilldownModal'));
+            const body = document.getElementById('drilldownBody');
+            body.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div></div>';
+            modal.show();
+
             try {
-                const resp = await fetch("/results/" + id, { method: "DELETE" });
-                if (!resp.ok) {
-                    const errorBody = await resp.text();
-                    console.error("SERVER ERROR HTML DETECTED (DELETE):", errorBody);
-                    throw new Error(`Delete Failed (${resp.status})`);
+                const data = await fetchReport(id);
+
+                if (!data || data.error) {
+                    body.innerHTML = `<div class="text-center p-5 text-danger"><b>Error:</b> ${data?.error || 'Record not found.'}</div>`;
+                    return;
                 }
-                const data = await resp.json();
-                if (data.status === "success") {
-                    logAction("Session purged successfully.");
-                    loadHistoryArchive();
-                } else {
-                    alert("Error: " + (data.error || "Neural link failure."));
-                }
-            } catch (e) {
-                alert("Network error: " + e.message);
-            }
-        };
-        
-        modal.show();
-    }
 
-    async function drilldown(id) {
-        const modal = new bootstrap.Modal(document.getElementById('drilldownModal'));
-        const body = document.getElementById('drilldownBody');
-        body.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div></div>';
-        modal.show();
+                const classification = data.classification || {};
+                const verdict = classification.verdict || 'Unknown';
+                const reasons = Array.isArray(classification.reasons) ? classification.reasons : [];
 
-        try {
-            const data = await fetchReport(id);
-
-            if (!data || data.error) {
-                body.innerHTML = `<div class="text-center p-5 text-danger"><b>Error:</b> ${data?.error || 'Record not found.'}</div>`;
-                return;
-            }
-
-            const classification = data.classification || {};
-            const verdict = classification.verdict || 'Unknown';
-            const reasons = Array.isArray(classification.reasons) ? classification.reasons : [];
-
-            body.innerHTML = `
+                body.innerHTML = `
                 <div class="row g-4">
                     <div class="col-md-6">
                         <div class="kpi-title">Identity Signature</div>
@@ -1147,7 +1539,7 @@
                     <div class="col-12">
                         <div class="kpi-title mb-2">Flagged Neural Events</div>
                         <div class="console" style="height:auto; min-height:80px; color:#ef4444; background:#fff; border-color:#fee2e2;">
-                            ${reasons.length ? reasons.map(r => `● ${r.tag || r} ${r.confidence !== undefined ? ' ('+(r.confidence*100).toFixed(0)+'% Conf)' : ''}`).join('<br>') : 'No anomalies detected by Shield Engine.'}
+                            ${reasons.length ? reasons.map(r => `● ${r.tag || r} ${r.confidence !== undefined ? ' (' + (r.confidence * 100).toFixed(0) + '% Conf)' : ''}`).join('<br>') : 'No anomalies detected by Shield Engine.'}
                         </div>
                     </div>
                     <div class="col-12">
@@ -1156,35 +1548,36 @@
                     </div>
                 </div>
             `;
-        } catch (e) {
-            body.innerHTML = `<div class="text-center p-5 text-danger"><b>Connection Error:</b> ${e.message}</div>`;
+            } catch (e) {
+                body.innerHTML = `<div class="text-center p-5 text-danger"><b>Connection Error:</b> ${e.message}</div>`;
+            }
         }
-    }
 
-    // Load Metrics Chart (Health)
-    new Chart(document.getElementById('loadChart'), {
-        type: 'line',
-        data: {
-            labels: ['10:00', '10:05', '10:10', '10:15', '10:20', '10:25'],
-            datasets: [{ 
-                label: 'Inference Load', 
-                data: [42, 38, 55, 48, 62, 59], 
-                borderColor: '#4f46e5', 
-                backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                fill: true,
-                tension: 0.4 
-            }]
-        },
-        options: { 
-            plugins: { legend: { display:false } }, 
-            scales:{
-                x:{ grid:{display:false}, ticks:{color:'#64748b'} }, 
-                y:{ grid:{color:'#f1f5f9'}, ticks:{color:'#64748b'} }
-            } 
-        }
-    });
+        // Load Metrics Chart (Health)
+        new Chart(document.getElementById('loadChart'), {
+            type: 'line',
+            data: {
+                labels: ['10:00', '10:05', '10:10', '10:15', '10:20', '10:25'],
+                datasets: [{
+                    label: 'Inference Load',
+                    data: [42, 38, 55, 48, 62, 59],
+                    borderColor: '#4f46e5',
+                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#64748b' } },
+                    y: { grid: { color: '#f1f5f9' }, ticks: { color: '#64748b' } }
+                }
+            }
+        });
 
-</script>
+    </script>
 </body>
+
 </html>
 ```

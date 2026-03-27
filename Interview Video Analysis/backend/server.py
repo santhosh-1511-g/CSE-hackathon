@@ -230,6 +230,8 @@ def upload_resume():
     print(f"Incoming Request: {request.method} {request.url}")
     try:
         candidate_id = request.form.get('candidate_id')
+        selected_role = request.form.get('role', 'IT / Software Jobs') # Default to IT
+        
         if not candidate_id:
             return jsonify({"error": "Missing candidate_id"}), 400
             
@@ -240,14 +242,17 @@ def upload_resume():
         if file.filename == '':
             return jsonify({"error": "No selected file"}), 400
 
-        # Process resume using pdfplumber stream
-        resume_data = extract_resume_metadata(file.stream)
+        # Process resume using role-aware metadata extraction
+        resume_data = extract_resume_metadata(file.stream, selected_role=selected_role)
         
         db = get_db_connection()
         if db is not None:
             res = db.results.update_one(
                 {"_id": ObjectId(candidate_id)},
-                {"$set": {"resume_profile": resume_data}}
+                {"$set": {
+                    "resume_profile": resume_data,
+                    "selected_role": selected_role
+                }}
             )
             if res.matched_count == 0:
                 return jsonify({"error": "Candidate not found"}), 404
