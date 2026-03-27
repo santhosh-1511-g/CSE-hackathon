@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS
 import os
+import base64
 import numpy as np
 from database import get_db
 from video_analysis import analyze_video
@@ -10,6 +11,8 @@ from resume_processor import extract_resume_metadata
 from bson import ObjectId
 import sys
 import io
+import threading
+import tempfile
 
 # Force UTF-8 for all console output on Windows
 if sys.platform == "win32":
@@ -102,42 +105,79 @@ def analyze():
         candidate_id = request.form.get('candidate_id')
         candidate_name = request.form.get('candidate_name')
         
-        result = analyze_video(video_file)
+        # ✅ Save file immediately and spawn background thread
+        if not video_file:
+            return jsonify({"status": "error", "message": "No video file provided"}), 400
+            
+        # Use a proper uploads directory
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        uploads_dir = os.path.join(base_dir, 'uploads')
+        os.makedirs(uploads_dir, exist_ok=True)
         
-        if "error" in result:
-            return jsonify({"status": "error", "message": result["error"]}), 500
+        # Create a unique filename
+        filename = f"vid_{candidate_id or 'new'}_{os.urandom(4).hex()}.mp4"
+        temp_path = os.path.join(uploads_dir, filename)
+        video_file.save(temp_path)
+        
+        app.logger.info(f"Video saved to {temp_path}. Starting background analysis...")
 
-        # ✅ Insert/Update result and capture ID (if DB is available)
-        db = get_db_connection()
-        if db is not None:
+        def run_async_analysis(path, cid, name):
             try:
-                # Clean result of NumPy types before MongoDB insertion
-                mongo_result = clean_numpy_types(result)
+                # Import here to avoid circular dependencies
+                from video_analysis import analyze_video_path, extract_audio_text
                 
-                if candidate_name:
-                    mongo_result["candidate_name"] = candidate_name
+                app.logger.info(f"Background thread started for candidate {cid}")
                 
-                if candidate_id:
-                    app.logger.info(f"Updating candidate: {candidate_id}")
-                    mongo_result["status"] = "Processed"  # ✅ Mark as processed
-                    db.results.update_one(
-                        {"_id": ObjectId(candidate_id)},
-                        {"$set": mongo_result}
-                    )
-                    result["_id"] = candidate_id
-                else:
-                    app.logger.info(f"Saving new result to collection: {db.results.name}")
-                    mongo_result["status"] = "Processed"  # ✅ Mark as processed
-                    inserted = db.results.insert_one(mongo_result)
-                    app.logger.info(f"Inserted ID: {inserted.inserted_id}")
-                    result["_id"] = str(inserted.inserted_id)
-            except Exception as db_error:
-                app.logger.error(f"Database save/update failed: {db_error}")
-                # Continue without saving to DB
-        else:
-            result["_id"] = None  # No DB, no ID
-        
-        return jsonify({"status": "success", "analysis": result})
+                # Perform analysis
+                metrics = analyze_video_path(path)
+                transcript = extract_audio_text(path)
+                metrics["transcript"] = transcript
+                
+                # Cleanup the temp file after analysis
+                if os.path.exists(path):
+                    try:
+                        os.remove(path)
+                    except Exception as e:
+                        app.logger.warning(f"Failed to remove temp file {path}: {e}")
+
+                db = get_db_connection()
+                if db is not None:
+                    mongo_result = clean_numpy_types(metrics)
+                    if name:
+                        mongo_result["candidate_name"] = name
+                    mongo_result["status"] = "Processed"
+                    
+                    if cid:
+                        db.results.update_one(
+                            {"_id": ObjectId(cid)},
+                            {"$set": mongo_result}
+                        )
+                    else:
+                        db.results.insert_one(mongo_result)
+                    app.logger.info(f"Background analysis complete for {cid or 'new candidate'}")
+            except Exception as e:
+                app.logger.error(f"Async analysis failed: {e}")
+                import traceback
+                traceback.print_exc()
+
+        # Update status to 'Processing' if cid exists
+        db = get_db_connection()
+        if db is not None and candidate_id:
+            db.results.update_one(
+                {"_id": ObjectId(candidate_id)},
+                {"$set": {"status": "Processing"}}
+            )
+
+        # Start thread
+        thread = threading.Thread(target=run_async_analysis, args=(temp_path, candidate_id, candidate_name))
+        thread.daemon = True
+        thread.start()
+
+        return jsonify({
+            "status": "accepted", 
+            "message": "Analysis started in background", 
+            "candidate_id": candidate_id
+        }), 202
 
     except Exception as e:
         import traceback
@@ -332,6 +372,55 @@ def system_status():
         import traceback
         app.logger.error(f"ADMIN STATS ERROR: {traceback.format_exc()}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/candidate/photo', methods=['POST', 'OPTIONS'])
+def upload_candidate_photo():
+    if request.method == 'OPTIONS':
+        return jsonify({"status": "ok"}), 200
+    try:
+        candidate_id = request.form.get('candidate_id')
+        if not candidate_id:
+            return jsonify({"error": "Missing candidate_id"}), 400
+        if 'file' not in request.files:
+            return jsonify({"error": "No file part"}), 400
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({"error": "No selected file"}), 400
+
+        # Read image and convert to base64 data URI
+        img_bytes = file.read()
+        content_type = file.content_type or 'image/png'
+        b64_str = base64.b64encode(img_bytes).decode('utf-8')
+        data_uri = f"data:{content_type};base64,{b64_str}"
+
+        db = get_db_connection()
+        if db is not None:
+            res = db.results.update_one(
+                {"_id": ObjectId(candidate_id)},
+                {"$set": {"profile_pic": data_uri}}
+            )
+            if res.matched_count == 0:
+                return jsonify({"error": "Candidate not found"}), 404
+            return jsonify({"status": "success", "profile_pic": data_uri})
+        else:
+            return jsonify({"error": "Database not available"}), 503
+    except Exception as e:
+        app.logger.error(f"Photo upload error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/candidate/<id>/photo', methods=['GET'])
+def get_candidate_photo(id):
+    db = get_db_connection()
+    if db is None:
+        return jsonify({"error": "Database not available"}), 503
+    try:
+        doc = db.results.find_one({"_id": ObjectId(id)}, {"profile_pic": 1})
+        if not doc:
+            return jsonify({"error": "Not found"}), 404
+        pic = doc.get("profile_pic") or doc.get("resume_profile", {}).get("profile_pic")
+        return jsonify({"profile_pic": pic})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
 @app.route("/")
 def home():

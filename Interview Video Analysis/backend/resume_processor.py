@@ -2,6 +2,7 @@ import zipfile
 import xml.etree.ElementTree as ET
 import os
 import re
+import base64
 import pdfplumber
 import io
 
@@ -137,6 +138,47 @@ ROLE_BENCHMARKS = {
         "Skills": ['accounting', 'finance', 'excel', 'tally', 'auditing', 'taxation', 'financial analysis', 'banking', 'investment', 'ledger', 'balance sheet', 'gst'],
         "Projects": ['finance', 'financial', 'audit', 'accounts', 'tax', 'portfolio']
     }
+def extract_profile_pic_from_pdf(file_bytes):
+    """Try to extract the largest image from the first page of a PDF (likely a profile photo)."""
+    try:
+        with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+            if not pdf.pages:
+                return None
+            page = pdf.pages[0]
+            images = page.images
+            if not images:
+                return None
+            # Find the largest image by area (width * height)
+            best = max(images, key=lambda img: (img.get('width', 0) or 0) * (img.get('height', 0) or 0))
+            # Check if image is reasonable size for a headshot (at least 30x30 px)
+            w = best.get('width', 0) or 0
+            h = best.get('height', 0) or 0
+            if w < 30 or h < 30:
+                return None
+            # Extract the image data from the page
+            x0 = best.get('x0', 0)
+            top = best.get('top', 0)
+            x1 = best.get('x1', x0 + w)
+            bottom = best.get('bottom', top + h)
+            cropped = page.crop((x0, top, x1, bottom))
+            img_obj = cropped.to_image(resolution=150)
+            buf = io.BytesIO()
+            img_obj.save(buf, format='PNG')
+            buf.seek(0)
+            b64 = base64.b64encode(buf.read()).decode('utf-8')
+            return f"data:image/png;base64,{b64}"
+    except Exception as e:
+        print(f"Profile Pic Extraction Error: {e}")
+        return None
+
+# --- Strict Validation Logic ---
+CAT_KEYWORDS = {
+    "Skills": ['python', 'java', 'c++', 'javascript', 'html', 'css', 'sql', 'react', 'django', 'flask', 'nodejs', 'mongodb', 'docker', 'aws', 'git', 'linux', 'machine learning'],
+    "Projects": ['project', 'app', 'system', 'platform', 'website', 'tool', 'bot', 'chatbot', 'github.com'],
+    "Workshops/Trainings": ['workshop', 'training', 'seminar', 'bootcamp', 'webinar', 'certification course'],
+    "Certifications": ['certification', 'certified', 'license', 'nptel', 'coursera', 'udemy', 'hackerrank', 'microsoft certified', 'aws certified'],
+    "Internships": ['internship', 'intern', 'trainee', 'summer intern'],
+    "Work Experience": ['job', 'experience', 'worked at', 'employment', 'senior', 'junior', 'developer at', 'engineer at']
 }
 
 CERT_ORGS = ['nptel', 'coursera', 'udemy', 'hackerrank', 'microsoft', 'google', 'aws', 'cisco', 'oracle', 'linkedin', 'edx', 'simplilearn']
@@ -183,6 +225,7 @@ def extract_resume_metadata(file_stream, selected_role="IT / Software Jobs") -> 
     except AttributeError:
         file_bytes = file_stream
 
+    profile_pic = extract_profile_pic_from_pdf(file_bytes)
     text = extract_text_from_pdf(file_bytes)
     if not text.strip():
         text = extract_text_from_docx(file_bytes)
@@ -294,6 +337,7 @@ def extract_resume_metadata(file_stream, selected_role="IT / Software Jobs") -> 
 
     return {
         "name": lines[0][:30] if lines else "Candidate",
+        "profile_pic": profile_pic,
         "resume_score": int(completeness_score * 10),
         "completeness_score": completeness_score,
         "communication_skills": comm_percent,

@@ -3,435 +3,343 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Candidate Deep-Dive | COGNI.HIRE</title>
+    <title>Candidate Analysis | SHIELD·PRO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        slate: {
-                            850: '#141E2F',
-                            900: '#0f172a',
-                            950: '#020617',
-                        },
-                        brand: {
-                            danger: '#f43f5e', // Rose-500
-                            success: '#10b981', // Emerald-500
-                            warning: '#f59e0b', // Amber-500
-                            accent: '#6366f1'   // Indigo-500
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        body { background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif;}
-        .score-ring { transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1); }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        :root {
+            --brand-accent: #4f46e5;
+            --brand-success: #10b981;
+            --brand-warning: #f59e0b;
+            --brand-danger: #ef4444;
+        }
+        body { background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; margin: 0; }
+        .sidebar { width: 300px; height: 100vh; position: fixed; left: 0; top: 0; background: #1e293b; border-right: 1px solid #334155; overflow-y: auto; z-index: 20; }
+        .main-content { margin-left: 300px; min-height: 100vh; background: #0f172a; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; }
+        .pulse { animation: pulse-animation 2s infinite; }
+        @keyframes pulse-animation { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
     </style>
 </head>
-<body class="bg-slate-900 min-h-screen">
+<body>
     <div id="root"></div>
-
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- Lucide SVG Components ---
-        const Terminal = ({size=24}) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-        );
-        const FolderGit2 = ({size=24}) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 20H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.7.9H20a2 2 0 0 1 2 2v5"/><circle cx="13" cy="12" r="2"/><path d="M18 19c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5Z"/><circle cx="18" cy="19" r="2"/><path d="M21 15V9"/></svg>
-        );
-        const BookOpen = ({size=24}) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-        );
-        const Award = ({size=24}) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
-        );
-        const Users = ({size=24}) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        );
-        const Briefcase = ({size=24}) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-        );
+        // Icons
+        const LaptopIcon = () => <i className="bi bi-laptop text-lg"></i>;
+        const SearchIcon = () => <i className="bi bi-search"></i>;
+        const AlertTriangle = () => <i className="bi bi-exclamation-triangle-fill"></i>;
+        const ShieldCheck = ({size}) => <i className="bi bi-shield-check" style={{fontSize: size}}></i>;
+        const FolderGit2 = ({size}) => <i className="bi bi-folder-fill" style={{fontSize: size}}></i>;
+        const Users = ({size}) => <i className="bi bi-people-fill" style={{fontSize: size}}></i>;
+        const Briefcase = ({size}) => <i className="bi bi-briefcase-fill" style={{fontSize: size}}></i>;
+        const Terminal = ({size}) => <i className="bi bi-terminal-fill" style={{fontSize: size}}></i>;
+        const BookOpen = ({size}) => <i className="bi bi-book-fill" style={{fontSize: size}}></i>;
+        const Award = ({size}) => <i className="bi bi-award-fill" style={{fontSize: size}}></i>;
 
-        const AlertTriangle = () => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        );
-        const ShieldCheck = ({size=24}) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-        );
-        const LaptopIcon = () => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"/></svg>
-        );
-        const UserCheck = () => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
-        );
-
-        // --- UI Components ---
-        const Gauge = ({ value, max, label, colorClass, icon }) => {
-            const radius = 36;
-            const circumference = 2 * Math.PI * radius;
-            const offset = circumference - (value / max) * circumference;
-            const strokeColor = colorClass.includes('danger') ? '#f43f5e' : colorClass.includes('success') ? '#10b981' : colorClass.includes('warning') ? '#f59e0b' : '#6366f1';
-
-            return (
-                <div className="flex flex-col items-center bg-slate-850 p-6 rounded-2xl border border-slate-800 shadow-xl w-full">
-                    <div className={`mb-3 ${colorClass}`}>{icon}</div>
-                    <div className="relative w-24 h-24 flex items-center justify-center">
-                        <svg className="transform -rotate-90 w-24 h-24">
-                            <circle cx="48" cy="48" r={radius} stroke="#1e293b" strokeWidth="8" fill="transparent" />
-                            <circle 
-                                cx="48" cy="48" r={radius} 
-                                stroke={strokeColor} 
-                                strokeWidth="8" 
-                                fill="transparent" 
-                                strokeDasharray={circumference} 
-                                strokeDashoffset={offset} 
-                                className="score-ring"
-                                strokeLinecap="round"
-                            />
-                        </svg>
-                        <div className="absolute flex flex-col items-center justify-center">
-                            <span className="text-2xl font-bold text-slate-100">{value}</span>
-                        </div>
-                    </div>
-                    <span className="mt-4 font-semibold text-slate-400 tracking-wider text-xs uppercase">{label}</span>
+        const Gauge = ({ value, max, label, colorClass, icon }) => (
+            <div className="glass-card p-6 flex flex-col items-center justify-center border border-slate-800/50 hover:border-indigo-500/30 transition-all duration-300">
+                <div className={`mb-3 ${colorClass}`}>{icon}</div>
+                <div className="text-2xl font-black text-white">{value}<span className="text-slate-500 text-sm ml-0.5">/{max}</span></div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{label}</div>
+                <div className="w-full h-1 bg-slate-800 rounded-full mt-4 overflow-hidden">
+                    <div className={`h-full ${colorClass.replace('text-', 'bg-')}`} style={{ width: `${(value/max)*100}%` }}></div>
                 </div>
-            );
-        };
+            </div>
+        );
 
         const Dashboard = () => {
+            const [candidates, setCandidates] = useState([]);
             const [data, setData] = useState(null);
             const [loading, setLoading] = useState(true);
-            const [error, setError] = useState(null);
             const [traceId, setTraceId] = useState("");
+            const [isDeepDive, setIsDeepDive] = useState(false);
+            const [uploadedPhotos, setUploadedPhotos] = useState({});
+
+            const handlePhotoUpload = async (e) => {
+                const file = e.target.files[0];
+                if(file && traceId) {
+                    const blobUrl = URL.createObjectURL(file);
+                    setUploadedPhotos(prev => ({...prev, [traceId]: blobUrl}));
+                    try {
+                        const formData = new FormData();
+                        formData.append('candidate_id', traceId);
+                        formData.append('file', file);
+                        const resp = await fetch('/api/candidate/photo', { method: 'POST', body: formData });
+                        if(resp.ok) {
+                            const result = await resp.json();
+                            if(result.profile_pic) setUploadedPhotos(prev => ({...prev, [traceId]: result.profile_pic}));
+                        }
+                    } catch(err) { console.error('Photo upload error:', err); }
+                }
+            };
 
             useEffect(() => {
                 const urlParams = new URLSearchParams(window.location.search);
                 const id = urlParams.get('id');
-                if (!id) {
-                    setError("No Candidate ID provided.");
-                    setLoading(false);
-                    return;
-                }
                 setTraceId(id);
 
-                const fetchReport = async () => {
+                const fetchData = async () => {
                     try {
-                        const response = await fetch(`/api/report/${id}`);
-                        if (!response.ok) {
-                            const errorBody = await response.text();
-                            console.error("SERVER ERROR HTML DETECTED:", errorBody);
-                            alert(`Server Error (${response.status}). Check console for details.`);
-                            return;
+                        const listsRes = await fetch("/results");
+                        if(listsRes.ok) {
+                            const listsJson = await listsRes.json();
+                            const processed = listsJson.results.filter(r => r.status === "Processed").reverse();
+                            setCandidates(processed);
+                            if(!id && processed.length > 0) {
+                                window.location.search = `?id=${processed[0]._id}`;
+                                return;
+                            }
                         }
-                        const json = await response.json();
-                        if (json.error) throw new Error(json.error);
-                        console.log("FULL CANDIDATE DATA:", json);
-                        setData(json);
-                    } catch (err) {
-                        setError(err.message);
-                    } finally {
-                        setLoading(false);
-                    }
+                        if (id) {
+                            const response = await fetch(`/api/report/${id}`);
+                            if (response.ok) {
+                                const json = await response.json();
+                                if (!json.error) setData(json);
+                            }
+                        }
+                    } catch (err) { console.error("Fetch error:", err); }
+                    setLoading(false);
                 };
+                fetchData();
+            }, [traceId]);
 
-                fetchReport();
-            }, []);
-
-            if (loading) return <div className="flex h-screen items-center justify-center text-xl text-slate-500 font-mono">Loading Neural Insights...</div>;
-            if (error) return <div className="flex h-screen items-center justify-center text-xl text-rose-500 font-mono">Error: {error}</div>;
-
-            const finalScore = data.final_score;
-            let statusColor = 'text-brand-success bg-emerald-950/40 border-emerald-900';
-            if (finalScore < 50) statusColor = 'text-brand-danger bg-rose-950/40 border-rose-900';
-            else if (finalScore < 80) statusColor = 'text-brand-warning bg-amber-950/40 border-amber-900';
-            
-            const timeline = data.gaze_timeline || [];
-            const transcript = data.raw_data?.transcript || "Transcript processing incomplete.";
+            const candInfo = candidates.find(c => c._id === traceId) || {};
+            const name = candInfo.candidate_name || data?.candidate_name || "Anonymous Candidate";
+            const photoUrl = uploadedPhotos[traceId] || candInfo?.profile_pic || data?.profile_pic || data?.resume_profile?.profile_pic || null;
 
             return (
-                <div className="min-h-screen p-8 max-w-6xl mx-auto space-y-8">
-                    {/* Header */}
-                    {/* Header */}
-                    <header className="flex justify-between items-end border-b border-slate-800 pb-6">
-                        <div>
-                            <h1 className="text-3xl font-extrabold text-slate-100 mb-1 border-l-4 border-indigo-500 pl-3">Neural Fit Analytics</h1>
-                            <p className="text-slate-500 font-mono text-xs pl-4 uppercase tracking-widest">Target Role: <span className="text-indigo-400 font-bold">{data.selected_role || 'General Ingestion'}</span></p>
-                        </div>
-                        <div className="text-right">
-                           <p className="text-slate-500 font-mono text-[10px] mb-1">SESSION TRACE ID</p>
-                           <p className="text-slate-100 font-mono text-xs font-bold">{traceId.toUpperCase()}</p>
-                        </div>
-                    </header>
-
-                    {/* TOP VERDICT CARD */}
-                    <div className={`p-8 rounded-3xl border-2 shadow-2xl transition-all duration-500 ${data.selection_status === 'SELECTED' ? 'bg-emerald-950/20 border-emerald-500/30' : 'bg-rose-950/20 border-rose-500/30'}`}>
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <div className={`w-3 h-3 rounded-full pulse ${data.selection_status === 'SELECTED' ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
-                                    <h2 className={`text-2xl font-black uppercase tracking-tighter ${data.selection_status === 'SELECTED' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                        Selection Verdict: {data.selection_status}
-                                    </h2>
-                                </div>
-                                <p className="text-slate-300 text-lg font-medium leading-relaxed italic">
-                                    "{data.selection_reason}"
-                                </p>
+                <div className="flex bg-[#0f172a] min-h-screen">
+                    {/* Sidebar */}
+                    <aside className="sidebar flex flex-col border-r border-slate-800 shadow-2xl">
+                        <div className="p-6 border-b border-slate-800">
+                            <div className="flex items-center gap-2 mb-6">
+                                <div className="w-3 h-3 bg-indigo-500 rounded-full shadow-[0_0_10px_rgba(79,70,229,0.5)]"></div>
+                                <span className="font-black text-xs tracking-[0.2em] text-white">SHIELD·PRO</span>
                             </div>
-                            <div className="flex flex-col items-center justify-center bg-slate-900/50 p-6 rounded-2xl border border-slate-800 min-w-[200px]">
-                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Technical Fit Index</span>
-                                <div className="text-4xl font-black text-white">{data.role_fit_score || 0}<span className="text-slate-600 text-xl">/10</span></div>
-                                <div className="w-full h-1.5 bg-slate-800 rounded-full mt-4 overflow-hidden">
-                                    <div className={`h-full transition-all duration-1000 ${data.role_fit_score >= 7 ? 'bg-emerald-500' : data.role_fit_score >= 5 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${(data.role_fit_score || 0) * 10}%` }}></div>
-                                </div>
+                            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-4">
+                                <i className="bi bi-people-fill"></i> Candidates
+                            </h2>
+                            <div className="relative">
+                                <span className="absolute left-3 top-2 text-slate-500"><SearchIcon /></span>
+                                <input type="text" placeholder="Search Filter..." className="pl-10 pr-4 py-2 bg-slate-900/50 w-full rounded-xl text-xs outline-none border border-slate-800 text-slate-300 focus:border-indigo-500/50 transition-all"/>
                             </div>
                         </div>
-                    </div>
-
-                    {/* GAUGES */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <Gauge value={Math.round(data.performance_breakdown?.technical || 0)} max={100} label="Behavioral Efficacy" colorClass="text-brand-accent" icon={<LaptopIcon/>} />
-                        <Gauge value={Math.round(data.integrity_index)} max={100} label="Integrity Index" colorClass={data.integrity_index < 50 ? 'text-brand-danger' : 'text-brand-success'} icon={data.integrity_index < 50 ? <AlertTriangle/> : <ShieldCheck size={20}/>} />
-                        <Gauge value={data.resume_score || 0} max={10} label="Resume Score" colorClass="text-indigo-400" icon={<FolderGit2 size={20}/>} />
-                        <Gauge value={data.communication_skills || 0} max={100} label="Comm. Efficiency" colorClass="text-cyan-400" icon={<Users size={20}/>} />
-                    </div>
-
-                    {/* ADVANCED AI EVALUATION TILES */}
-                    <div className="bg-slate-900/30 p-8 rounded-3xl border border-slate-800 backdrop-blur-md shadow-2xl">
-                        <div className="flex justify-between items-center mb-8 px-2">
-                           <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 bg-brand-accent/20 rounded-xl flex items-center justify-center text-brand-accent shadow-[0_0_15px_rgba(79,70,229,0.2)]">
-                                 <Briefcase size={20}/>
-                              </div>
-                              <div>
-                                 <h3 className="text-white font-black text-lg tracking-tight">Role-Specific Evidence Matrix</h3>
-                                 <p className="text-xs text-slate-500 font-mono">STRICT VALIDATION ENGINE · NEURAL PARSER v4.1</p>
-                              </div>
-                           </div>
-                           <div className="hidden md:flex items-center gap-2 px-4 py-1.5 bg-brand-success/10 border border-brand-success/20 rounded-full text-brand-success text-[10px] font-black tracking-widest uppercase">
-                              <div className="w-1.5 h-1.5 bg-brand-success rounded-full pulse"></div> Evidence Verified (Dual-Match)
-                           </div>
-                        </div>
-
-                        {data.report_data ? (
-                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                              {[
-                                 { key: "Skills", icon: <Terminal size={18}/>, col: "text-indigo-400", bg: "bg-indigo-400/5", border: "border-indigo-500/10" },
-                                 { key: "Projects", icon: <FolderGit2 size={18}/>, col: "text-emerald-400", bg: "bg-emerald-400/5", border: "border-emerald-500/10" },
-                                 { key: "Workshops/Trainings", icon: <BookOpen size={18}/>, col: "text-cyan-400", bg: "bg-cyan-400/5", border: "border-cyan-500/10" },
-                                 { key: "Certifications", icon: <Award size={18}/>, col: "text-amber-400", bg: "bg-amber-400/5", border: "border-amber-500/10" },
-                                 { key: "Internships", icon: <Users size={18}/>, col: "text-purple-400", bg: "bg-purple-400/5", border: "border-purple-500/10" },
-                                 { key: "Work Experience", icon: <Briefcase size={18}/>, col: "text-rose-400", bg: "bg-rose-400/5", border: "border-rose-500/10" }
-                              ].map((item, i) => {
-                                 const itemData = data.report_data[item.key] || { status: "NOT FOUND", details: "None" };
-                                 const isFound = itemData.status === "FOUND";
-
-                                 return (
-                                    <div key={i} className={`group ${item.bg} border ${item.border} rounded-2xl p-6 transition-all duration-300 hover:bg-slate-800/40 hover:scale-[1.02] hover:-translate-y-1 shadow-sm`}>
-                                       <div className="flex justify-between items-start mb-5">
-                                          <div className={`p-2.5 rounded-xl bg-slate-900 border border-slate-700 shadow-inner group-hover:${item.col} transition-colors`}>
-                                             {item.icon}
-                                          </div>
-                                          <span className={`text-[9px] px-2.5 py-1 rounded-full font-black tracking-widest uppercase mb-4 border transition-all ${isFound ? 'bg-emerald-950/40 text-emerald-400 border-emerald-800' : 'bg-rose-950/40 text-rose-400 border-rose-900'}`}>
-                                             {itemData.status}
-                                          </span>
-                                       </div>
-                                       
-                                       <h4 className="text-slate-100 font-bold text-xs uppercase tracking-wider mb-2">{item.key}</h4>
-                                       <div className={`text-xs font-medium leading-relaxed min-h-[40px] ${isFound ? 'text-slate-300' : 'text-slate-500 italic'}`}>
-                                          {itemData.details === "None" ? `Records missing for this profile.` : itemData.details}
-                                       </div>
-
-                                       <div className="mt-4 pt-4 border-t border-slate-800 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                          <span className="text-[9px] font-mono text-slate-600">NODE REF: {item.key.substring(0,3).toUpperCase()}</span>
-                                          <div className={`w-1.5 h-1.5 rounded-full ${isFound ? 'bg-brand-success' : 'bg-slate-700'}`}></div>
-                                       </div>
+                        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                            {candidates.map(c => (
+                                <div key={c._id} onClick={() => { setTraceId(c._id); setIsDeepDive(false); window.history.pushState({}, '', `?id=${c._id}`); }} 
+                                    className={`p-4 rounded-xl cursor-pointer flex items-center gap-3 transition-all duration-300 ${c._id === traceId ? 'bg-indigo-500/10 border border-indigo-500/30' : 'hover:bg-slate-800/50 border border-transparent'}`}>
+                                    <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-400 border border-slate-700">
+                                        {(c.candidate_name||"A")[0].toUpperCase()}
                                     </div>
-                                 );
-                              })}
-                           </div>
-                        ) : null}
-                    </div>
-
-                    {/* Summary Row */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Executive Reason Box integrated here */}
-                        <div className="lg:col-span-3 p-6 bg-slate-850 rounded-2xl border border-slate-800 flex flex-col md:flex-row justify-between items-center gap-6">
-                            <div className="flex-1">
-                                <h3 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-3">Linguistic Intelligence</h3>
-                                <div className="flex items-center gap-6">
-                                    {(() => {
-                                        const score = data.communication_skills || 0;
-                                        let tier = { label: "Poor", color: "text-brand-danger", bg: "bg-rose-500/10" };
-                                        if (score >= 80) tier = { label: "Excellent", color: "text-brand-success", bg: "bg-emerald-500/10" };
-                                        else if (score >= 60) tier = { label: "Good", color: "text-amber-400", bg: "bg-amber-500/10" };
-                                        else if (score >= 40) tier = { label: "Average", color: "text-amber-600", bg: "bg-amber-600/10" };
-                                        
-                                        return (
-                                            <div className="flex flex-col items-center">
-                                                <span className={`px-4 py-2 rounded-xl font-black uppercase tracking-tighter border border-current/20 ${tier.bg} ${tier.color}`}>
-                                                    {tier.label}
-                                                </span>
-                                                <span className="text-[10px] text-slate-500 mt-2 font-bold uppercase">Performance Tier</span>
-                                            </div>
-                                        );
-                                    })()}
-                                    <div className="flex-1 border-l border-slate-800 pl-6">
-                                        <p className="text-slate-400 text-sm leading-relaxed max-w-2xl">
-                                            The candidate's profile demonstrates a <span className="text-slate-200 font-bold">{data.communication_skills}%</span> linguistic efficiency rating. 
-                                            Our neural engine detected professional verb density and structural clarity sufficient for the selected path.
-                                        </p>
+                                    <div className="flex-1 min-w-0">
+                                        <div className={`font-bold text-xs truncate ${c._id === traceId ? 'text-indigo-400' : 'text-slate-300'}`}>{c.candidate_name || "Anonymous"}</div>
+                                        <div className="text-[9px] text-slate-500 font-bold uppercase tracking-tighter mt-0.5">{c.selected_role || 'General Talent'}</div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* MIDDLE ROW: Gaze Timeline */}
-                    <div className="bg-slate-850 p-6 rounded-2xl border border-slate-800 shadow-lg">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2">
-                                Gaze Deviation Timeline
-                            </h3>
-                            <div className="flex gap-2">
-                                <span className="text-xs bg-slate-900 border border-slate-700 px-3 py-1 rounded-full text-slate-400 font-mono">
-                                    Avg Dev: {Math.round((timeline.reduce((a,b)=>a+b,0)/Math.max(1, timeline.length))*100)}%
-                                </span>
-                                <span className={`text-xs px-3 py-1 rounded-full font-mono border ${timeline.filter(v => v > 0.4).length > 2 ? 'bg-rose-950/50 border-rose-900 text-rose-400' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                                    Anomalies: {timeline.filter(v => v > 0.4).length}
-                                </span>
-                            </div>
-                        </div>
-                        <div className="flex h-16 w-full gap-1 items-end bg-slate-900/50 p-2 rounded-lg border border-slate-800/50">
-                            {timeline.map((val, idx) => (
-                                <div key={idx} 
-                                     className={`flex-1 rounded-t-sm transition-all duration-300 ${val > 0.4 ? 'bg-rose-500' : 'bg-emerald-500'}`} 
-                                     style={{ height: `${Math.max(10, val * 100)}%`, opacity: val > 0.4 ? 0.9 : 0.6 }}
-                                     title={`Deviation: ${Math.round(val*100)}%`}>
+                                    <div className={`w-1.5 h-1.5 rounded-full ${c.integrity_index > 80 ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
                                 </div>
                             ))}
                         </div>
-                        <div className="flex justify-between text-xs text-slate-500 mt-2 font-mono px-2">
-                            <span>00:00</span>
-                            <span>Session End</span>
-                        </div>
-                    </div>
+                    </aside>
 
-                    {/* Neural Fit Analytics */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Strengths & Weaknesses */}
-                        <div className="bg-slate-850 p-6 rounded-2xl border border-slate-800 shadow-lg">
-                            <h3 className="text-emerald-400 font-bold text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
-                                <ShieldCheck/> Neural Strengths
-                            </h3>
-                            <ul className="space-y-3">
-                                {data.resume_profile?.strengths?.map((s, i) => (
-                                    <li key={i} className="flex items-start gap-3 text-sm text-slate-300">
-                                        <div className="mt-1 w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
-                                        {s}
-                                    </li>
-                                ))}
-                            </ul>
-                            
-                            <h3 className="text-rose-400 font-bold text-xs uppercase tracking-widest mt-8 mb-4 flex items-center gap-2">
-                                <AlertTriangle/> Optimization Nodes (Weaknesses)
-                            </h3>
-                            <ul className="space-y-3">
-                                {data.resume_profile?.weaknesses?.map((w, i) => (
-                                    <li key={i} className="flex items-start gap-3 text-sm text-slate-400 italic">
-                                        <div className="mt-1 w-1.5 h-1.5 rounded-full bg-rose-500"></div>
-                                        {w}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        {/* Resume vs Interview Alignment Breakdown */}
-                        <div className="bg-slate-850 p-6 rounded-2xl border border-slate-800 shadow-lg">
-                            <h3 className="text-brand-accent font-bold text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
-                                <LaptopIcon/> Skill Verification Matrix
-                            </h3>
-                            <div className="space-y-4">
-                                {data.skill_alignment && data.skill_alignment.length > 0 ? (
-                                    data.skill_alignment.map((skill, i) => (
-                                        <div key={i} className="bg-slate-900/50 p-4 rounded-xl border border-slate-800 flex justify-between items-center">
-                                            <div>
-                                                <div className="text-slate-200 font-bold text-sm tracking-wide capitalize">{skill.skill}</div>
-                                                <div className="text-[10px] text-slate-500 font-mono mt-0.5">{skill.mentions} transcript mentions</div>
-                                            </div>
-                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter ${skill.mentions >= 1 ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-900' : 'bg-amber-950/40 text-amber-400 border border-amber-900'}`}>
-                                                {skill.mentions >= 1 ? 'Verified Depth' : 'Latency Found'}
-                                            </span>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="text-slate-500 text-xs italic p-4 text-center border border-dashed border-slate-800 rounded-xl">
-                                        Waiting for neural cross-referencing completion...
-                                    </div>
+                    {/* Main Content */}
+                    <main className="main-content flex-1 flex flex-col p-8">
+                        {/* Breadcrumbs */}
+                        <div className="flex justify-between items-center mb-10">
+                            <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-2">
+                                <a href="index.html" className="hover:text-indigo-400 transition-colors">Core Hub</a> 
+                                <span>/</span> 
+                                <span className={!isDeepDive ? "text-slate-100" : "cursor-pointer hover:text-indigo-400"} onClick={() => setIsDeepDive(false)}>Profile</span>
+                                {isDeepDive && (
+                                    <><span>/</span> <span className="text-slate-100">Neural Deep-Dive</span></>
                                 )}
                             </div>
+                            <div className="flex gap-3">
+                                <button className="px-4 py-2 glass-card text-[10px] font-black uppercase tracking-widest text-slate-300 border border-slate-800 hover:bg-slate-800 transition-all">Export Trace</button>
+                                <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 shadow-lg shadow-indigo-900/40 transition-all">Admin Actions</button>
+                            </div>
                         </div>
-                    </div>
 
-                    {/* BOTTOM ROW: Details & Transcript */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Red Flags & Breakdown */}
-                        <div className="lg:col-span-1 space-y-6">
-                            <div className="bg-slate-850 p-6 rounded-2xl border border-slate-800 h-full">
-                                <h3 className="text-rose-500 font-bold text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
-                                    <AlertTriangle/> Critical Warnings
-                                </h3>
-                                {!data.critical_warnings || data.critical_warnings.length === 0 ? (
-                                    <p className="text-slate-500 text-sm italic">No warnings detected during the session.</p>
-                                ) : (
-                                    <ul className="space-y-3">
-                                        {data.critical_warnings.map((warning, i) => (
-                                            <li key={i} className={`flex justify-between items-center text-xs p-3 rounded border border-slate-800/50 leading-relaxed font-medium ${warning.confidence >= 0.8 ? 'bg-emerald-900/30 text-emerald-200' : 'bg-rose-900/30 text-rose-200'}`}>
-                                                <span>{warning.tag || warning}</span>
-                                                <span className="font-mono bg-slate-900/40 px-2 py-0.5 rounded text-[10px] tracking-wide">
-                                                    {warning.confidence !== undefined ? (warning.confidence * 100).toFixed(0) : '100'}%
-                                                </span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
-                                
-                                <div className="mt-8 pt-6 border-t border-slate-800">
-                                    <h3 className="text-slate-400 font-bold text-xs uppercase tracking-widest mb-4">Neural Pillars</h3>
-                                    <div className="space-y-3 text-sm font-mono">
-                                        <div className="flex justify-between"><span className="text-slate-500">Soft Skills</span> <span className="text-emerald-400">{data.performance_breakdown?.soft_skills}%</span></div>
-                                        <div className="flex justify-between"><span className="text-slate-500">Communication</span> <span className="text-indigo-400">{data.performance_breakdown?.communication}%</span></div>
+                        {loading ? (
+                            <div className="flex-1 flex items-center justify-center">
+                                <div className="text-indigo-500 pulse font-black tracking-widest text-xs uppercase">Initializing Neural Sequence...</div>
+                            </div>
+                        ) : data ? (
+                            !isDeepDive ? (
+                                /* OVERVIEW VIEW */
+                                <div className="max-w-4xl mx-auto w-full">
+                                    <div className="glass-card p-10 flex flex-col md:flex-row items-center gap-10 border border-slate-800/50">
+                                        <div className="relative group cursor-pointer" onClick={() => document.getElementById('photo-upload').click()}>
+                                            <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-slate-800 shadow-2xl relative">
+                                                {photoUrl ? (
+                                                    <img src={photoUrl} className="w-full h-full object-cover" alt="Profile" />
+                                                ) : (
+                                                    <div className="w-full h-full bg-slate-900 flex items-center justify-center text-5xl text-indigo-500 font-black">
+                                                        {name[0].toUpperCase()}
+                                                    </div>
+                                                )}
+                                                <div className="absolute inset-0 bg-indigo-950/80 flex flex-col items-center justify-center text-[10px] font-black text-white uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                                    <i className="bi bi-camera-fill text-xl mb-2"></i>
+                                                    Update Identity
+                                                </div>
+                                            </div>
+                                            <input id="photo-upload" type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} />
+                                        </div>
+                                        <div className="flex-1 text-center md:text-start">
+                                            <div className="inline-block px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-emerald-400 text-[9px] font-black tracking-widest uppercase mb-4">
+                                                <i className="bi bi-patch-check-fill me-1"></i> Analysis Finalized
+                                            </div>
+                                            <h2 className="text-5xl font-black text-white tracking-tighter mb-2">{name}</h2>
+                                            <div className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-8 flex items-center justify-center md:justify-start gap-4">
+                                                <span>{data.selected_role || 'General Candidate'}</span>
+                                                <span className="w-1.5 h-1.5 bg-slate-700 rounded-full"></span>
+                                                <span className="text-indigo-400 font-black">Score: {data.role_fit_score || 0}/10</span>
+                                            </div>
+                                            <button 
+                                                className="px-8 py-4 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-900/40 flex items-center gap-3 mx-auto md:mx-0 group"
+                                                onClick={() => setIsDeepDive(true)}>
+                                                <i className="bi bi-cpu-fill text-lg group-hover:rotate-90 transition-transform duration-500"></i>
+                                                OPEN NEURAL DEEP ANALYSIS
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
+                                        <div className="glass-card p-6 border border-slate-800/50">
+                                            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Integrity Summary</h3>
+                                            <div className="flex items-center gap-6">
+                                                <div className={`text-4xl font-black ${data.integrity_index > 80 ? 'text-emerald-400' : 'text-rose-400'}`}>{data.integrity_index}%</div>
+                                                <p className="text-xs text-slate-400 font-medium leading-relaxed">Behavioral gaze and linguistic markers suggest high reliability of inputs.</p>
+                                            </div>
+                                        </div>
+                                        <div className="glass-card p-6 border border-slate-800/50">
+                                            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Communication Efficacy</h3>
+                                            <div className="flex items-center gap-6">
+                                                <div className="text-4xl font-black text-indigo-400">{data.communication_skills}%</div>
+                                                <p className="text-xs text-slate-400 font-medium leading-relaxed">Demonstrates professional clarity and semantic density appropriate for role.</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
+                            ) : (
+                                /* DEEP ANALYSIS VIEW (Neural Fit Analytics) */
+                                <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in transition-all duration-700">
+                                    <header className="flex justify-between items-end border-b border-slate-800 pb-6">
+                                        <div>
+                                            <h1 className="text-3xl font-extrabold text-slate-100 mb-1 border-l-4 border-indigo-500 pl-3">Neural Fit Analytics</h1>
+                                            <p className="text-slate-500 font-mono text-xs pl-4 uppercase tracking-widest">Target Role: <span className="text-indigo-400 font-bold">{data.selected_role || 'General Ingestion'}</span></p>
+                                        </div>
+                                        <div className="text-right">
+                                           <p className="text-slate-500 font-mono text-[10px] mb-1">SESSION TRACE ID</p>
+                                           <p className="text-slate-100 font-mono text-xs font-bold">{traceId.toUpperCase()}</p>
+                                        </div>
+                                    </header>
 
-                        {/* Transcript */}
-                        <div className="lg:col-span-2 bg-slate-850 p-6 rounded-2xl border border-slate-800">
-                            <h3 className="text-slate-300 font-bold text-xs uppercase tracking-widest mb-4">Live Transcription</h3>
-                            <div className="prose prose-invert max-w-none text-slate-400 font-serif leading-loose text-lg" 
-                                 dangerouslySetInnerHTML={{
-                                    __html: transcript
-                                        .replace(/facebook|spare time|girls/gi, match => `<span class="bg-rose-500/20 text-rose-400 border-b border-rose-500/50 pb-0.5 px-1">${match}</span>`)
-                                        .replace(/hardware|software|bsnl|technology|system|data|supervising/gi, match => `<span class="bg-emerald-500/20 text-emerald-400 border-b border-emerald-500/50 pb-0.5 px-1">${match}</span>`)
-                                 }}
-                            />
-                        </div>
-                    </div>
+                                    <div className={`p-8 rounded-3xl border-2 shadow-2xl transition-all duration-500 ${data.selection_status === 'SELECTED' ? 'bg-emerald-950/20 border-emerald-500/30' : 'bg-rose-950/20 border-rose-500/30'}`}>
+                                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-3 mb-3">
+                                                    <div className={`w-3 h-3 rounded-full pulse ${data.selection_status === 'SELECTED' ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
+                                                    <h2 className={`text-2xl font-black uppercase tracking-tighter ${data.selection_status === 'SELECTED' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                        Selection Verdict: {data.selection_status}
+                                                    </h2>
+                                                </div>
+                                                <p className="text-slate-300 text-lg font-medium leading-relaxed italic">
+                                                    "{data.selection_reason}"
+                                                </p>
+                                            </div>
+                                            <div className="flex flex-col items-center justify-center bg-slate-900/50 p-6 rounded-2xl border border-slate-800 min-w-[200px]">
+                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Technical Fit Index</span>
+                                                <div className="text-4xl font-black text-white">{data.role_fit_score || 0}<span className="text-slate-600 text-xl">/10</span></div>
+                                                <div className="w-full h-1.5 bg-slate-800 rounded-full mt-4 overflow-hidden">
+                                                    <div className={`h-full transition-all duration-1000 ${data.role_fit_score >= 7 ? 'bg-emerald-500' : data.role_fit_score >= 5 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${(data.role_fit_score || 0) * 10}%` }}></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                        <Gauge value={Math.round(data.performance_breakdown?.technical || 0)} max={100} label="Behavioral Efficacy" colorClass="text-indigo-400" icon={<LaptopIcon/>} />
+                                        <Gauge value={Math.round(data.integrity_index)} max={100} label="Integrity Index" colorClass={data.integrity_index < 50 ? 'text-rose-500' : 'text-emerald-500'} icon={data.integrity_index < 50 ? <AlertTriangle/> : <ShieldCheck size="20px"/>} />
+                                        <Gauge value={data.resume_score || 0} max={10} label="Resume Score" colorClass="text-cyan-400" icon={<FolderGit2 size="20px"/>} />
+                                        <Gauge value={data.communication_skills || 0} max={100} label="Comm. Efficiency" colorClass="text-amber-400" icon={<Users size="20px"/>} />
+                                    </div>
+
+                                    <div className="bg-slate-900/30 p-8 rounded-3xl border border-slate-800 backdrop-blur-md shadow-2xl">
+                                        <div className="flex justify-between items-center mb-8 px-2">
+                                           <div className="flex items-center gap-4">
+                                              <div className="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-400 shadow-[0_0_15px_rgba(79,70,229,0.2)]">
+                                                 <Briefcase size="20px"/>
+                                              </div>
+                                              <div>
+                                                 <h3 className="text-white font-black text-lg tracking-tight">Role-Specific Evidence Matrix</h3>
+                                                 <p className="text-xs text-slate-500 font-mono">STRICT VALIDATION ENGINE · NEURAL PARSER v4.1</p>
+                                              </div>
+                                           </div>
+                                        </div>
+
+                                        {data.report_data ? (
+                                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                              {[
+                                                 { key: "Skills", icon: <Terminal size="18px"/>, col: "text-indigo-400", bg: "bg-indigo-400/5", border: "border-indigo-500/10" },
+                                                 { key: "Projects", icon: <FolderGit2 size="18px"/>, col: "text-emerald-400", bg: "bg-emerald-400/5", border: "border-emerald-500/10" },
+                                                 { key: "Workshops/Trainings", icon: <BookOpen size="18px"/>, col: "text-cyan-400", bg: "bg-cyan-400/5", border: "border-cyan-500/10" },
+                                                 { key: "Certifications", icon: <Award size="18px"/>, col: "text-amber-400", bg: "bg-amber-400/5", border: "border-amber-500/10" },
+                                                 { key: "Internships", icon: <Users size="18px"/>, col: "text-purple-400", bg: "bg-purple-400/5", border: "border-purple-500/10" },
+                                                 { key: "Work Experience", icon: <Briefcase size="18px"/>, col: "text-rose-400", bg: "bg-rose-400/5", border: "border-rose-500/10" }
+                                              ].map((item, i) => {
+                                                 const itemData = data.report_data[item.key] || { status: "NOT FOUND", details: "None" };
+                                                 const isFound = itemData.status === "FOUND";
+
+                                                 return (
+                                                    <div key={i} className={`group ${item.bg} border ${item.border} rounded-2xl p-6 transition-all duration-300 hover:bg-slate-800/40 hover:scale-[1.02] hover:-translate-y-1 shadow-sm`}>
+                                                       <div className="flex justify-between items-start mb-5">
+                                                          <div className={`p-2.5 rounded-xl bg-slate-900 border border-slate-700 shadow-inner group-hover:${item.col} transition-colors`}>
+                                                             {item.icon}
+                                                          </div>
+                                                          <span className={`text-[9px] px-2.5 py-1 rounded-full font-black tracking-widest uppercase mb-4 border transition-all ${isFound ? 'bg-emerald-950/40 text-emerald-400 border-emerald-800' : 'bg-rose-950/40 text-rose-400 border-rose-900'}`}>
+                                                             {itemData.status}
+                                                          </span>
+                                                       </div>
+                                                       
+                                                       <h4 className="text-slate-100 font-bold text-xs uppercase tracking-wider mb-2">{item.key}</h4>
+                                                       <div className={`text-xs font-medium leading-relaxed min-h-[40px] ${isFound ? 'text-slate-300' : 'text-slate-500 italic'}`}>
+                                                          {itemData.details === "None" ? `Records missing for this profile.` : itemData.details}
+                                                       </div>
+                                                    </div>
+                                                 );
+                                              })}
+                                           </div>
+                                        ) : null}
+                                    </div>
+                                </div>
+                            )
+                        ) : (
+                            <div className="flex-1 flex flex-col items-center justify-center text-center">
+                                <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center text-rose-500 mb-6">
+                                    <AlertTriangle />
+                                </div>
+                                <h3 className="text-xl font-bold text-white mb-2">Trace Data Unavailable</h3>
+                                <p className="text-slate-500 text-sm max-w-md">The requested neural session trace could not be located in the primary cluster. Verification required.</p>
+                            </div>
+                        )}
+                    </main>
                 </div>
             );
         };
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<Dashboard />);
+        ReactDOM.render(<Dashboard />, document.getElementById('root'));
     </script>
 </body>
 </html>
