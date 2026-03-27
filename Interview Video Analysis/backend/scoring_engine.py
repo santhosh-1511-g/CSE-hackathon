@@ -32,7 +32,14 @@ def get_weighted_score(transcript, gaze_deviation, emotion_summary, resume_profi
     total_word_count = len(transcript.split())
 
     # --- 1. Technical (40%) ---
-    tech_score = calculate_technical_depth(transcript_lower, total_word_count)
+    # Blend Interview tech density with Resume verified score
+    interview_tech = calculate_technical_depth(transcript_lower, total_word_count)
+    if resume_profile and "resume_score" in resume_profile:
+        # 60% Interview performance, 40% Resume verified skills
+        tech_score = (interview_tech * 0.6) + (resume_profile["resume_score"] * 0.4)
+        logging.info(f"Score Calculation Trace: [Technical Blend] was [{round(tech_score,1)}] because [Interview: {round(interview_tech)}, Resume: {resume_profile['resume_score']}].")
+    else:
+        tech_score = interview_tech
 
     # --- 2. Communication (20%) ---
     speech_pace_wpm = (total_word_count / 0.5) if total_word_count > 0 else 0
@@ -84,11 +91,11 @@ def get_weighted_score(transcript, gaze_deviation, emotion_summary, resume_profi
         for skill in resume_profile["top_5_technical_skills"]:
             mentions = transcript_lower.count(skill.lower())
             skill_analysis.append({"skill": skill, "mentions": mentions})
-            if mentions < 2:
+            if mentions < 1: # Reduced from 2 to 1 for fairer hackathon scoring
                 critical_warnings.append({
                     "tag": "Skill Depth Warning", 
                     "confidence": 0.9, 
-                    "message": f"Claimed expertise in {skill} but only mentioned it {mentions} times during the interview."
+                    "message": f"Claimed expertise in {skill} but rarely mentioned it in the interview."
                 })
 
     # --- 4. Soft Skills (10%) ---
@@ -96,6 +103,12 @@ def get_weighted_score(transcript, gaze_deviation, emotion_summary, resume_profi
     safe_gaze = gaze_deviation if gaze_deviation is not None else 0.0
     postural_engagement = 80.0 if safe_gaze < 0.3 else (40.0 if safe_gaze > 0.6 else 60.0)
     soft_score = 15.0 + ((smile_frequency * 0.6) + (postural_engagement * 0.4)) * 0.85
+
+    # factor in education score if available
+    if resume_profile and "detailed_scores" in resume_profile:
+        edu_boost = resume_profile["detailed_scores"].get("education", 5)
+        # Add a small weighted boost to soft skills based on education/professionalism
+        soft_score = (soft_score * 0.8) + (edu_boost * 10 * 0.2)
 
     # --- Final Math ---
     final_score = (tech_score * 0.40) + (comm_score * 0.20) + (integrity_score * 0.30) + (soft_score * 0.10)
