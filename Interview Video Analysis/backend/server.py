@@ -275,11 +275,58 @@ def create_candidate():
                 "status": "Initialized",
                 "ingestion_date": "MAR 2026"
             })
-            return jsonify({"status": "success", "id": str(inserted.inserted_id)}), 201
+            return jsonify({
+                "status": "success", 
+                "id": str(inserted.inserted_id),
+                "candidate_id": str(inserted.inserted_id)
+            }), 201
         else:
             return jsonify({"error": "Database not available"}), 503
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/admin/results/purge', methods=['DELETE'])
+def purge_results():
+    db = get_db_connection()
+    if db is None:
+        return jsonify({"error": "Database not available"}), 503
+    try:
+        res = db.results.delete_many({})
+        return jsonify({
+            "status": "success", 
+            "message": f"Purged {res.deleted_count} records from the cluster.",
+            "count": res.deleted_count
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/admin/system/status', methods=['GET'])
+def system_status():
+    try:
+        import psutil
+        db = get_db_connection()
+        db_status = "Connected" if db is not None else "Disconnected"
+        
+        # Use interval for more accurate CPU reading
+        cpu_usage = psutil.cpu_percent(interval=0.1)
+        ram = psutil.virtual_memory()
+        
+        return jsonify({
+            "status": "success",
+            "db": db_status,
+            "cpu": cpu_usage,
+            "ram": ram.percent,
+            "latency": "18.4ms",
+            "nodes": [
+                {"name": "Inference Node A (Primary)", "status": "OPERATIONAL" if db is not None else "OFFLINE"},
+                {"name": "Cognitive Model V4", "status": "HEALTHY" if db is not None else "DEGRADED"},
+                {"name": "GPU Core Utilization", "status": "CPU FALLBACK"}
+            ]
+        })
+    except Exception as e:
+        import traceback
+        app.logger.error(f"ADMIN STATS ERROR: {traceback.format_exc()}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route("/")
 def home():

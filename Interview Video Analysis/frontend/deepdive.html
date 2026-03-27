@@ -106,21 +106,20 @@
 
                 const fetchReport = async () => {
                     try {
-                        const response = await fetch(`http://127.0.0.1:5000/api/report/${id}`);
+                        const response = await fetch(`/api/report/${id}`);
                         if (!response.ok) {
                             const errorBody = await response.text();
                             console.error("SERVER ERROR HTML DETECTED:", errorBody);
                             alert(`Server Error (${response.status}). Check console for details.`);
-                            setLoading(false);
                             return;
                         }
                         const json = await response.json();
                         if (json.error) throw new Error(json.error);
                         console.log("FULL CANDIDATE DATA:", json);
                         setData(json);
-                        setLoading(false);
                     } catch (err) {
                         setError(err.message);
+                    } finally {
                         setLoading(false);
                     }
                 };
