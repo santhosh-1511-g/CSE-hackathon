@@ -138,6 +138,8 @@ ROLE_BENCHMARKS = {
         "Skills": ['accounting', 'finance', 'excel', 'tally', 'auditing', 'taxation', 'financial analysis', 'banking', 'investment', 'ledger', 'balance sheet', 'gst'],
         "Projects": ['finance', 'financial', 'audit', 'accounts', 'tax', 'portfolio']
     }
+}
+
 def extract_profile_pic_from_pdf(file_bytes):
     """Try to extract the largest image from the first page of a PDF (likely a profile photo)."""
     try:

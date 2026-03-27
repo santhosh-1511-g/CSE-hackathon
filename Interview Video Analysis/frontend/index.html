@@ -908,86 +908,96 @@
     const videoSelect = document.getElementById('videoSelect');
     const videoPreview = document.getElementById('videoPreview');
 
-    videoSelect.addEventListener('change', async function() {
-        if(this.files && this.files.length > 0) {
-            const files = Array.from(this.files);
-            const total = files.length;
-            logAction(`Starting bulk ingestion of ${total} media cluster(s)...`);
-            
-            document.getElementById('loader').style.display = 'block';
-            document.getElementById('scan-line').style.display = 'block';
-            document.getElementById('verdictBox').className = "verdict-box v-pending";
-            document.getElementById('verdictBox').innerText = "INGESTING BATCH...";
-            document.getElementById('leaderboardSection').style.display = 'none';
+    if (videoSelect) {
+        videoSelect.addEventListener('change', async function() {
+            if(this.files && this.files.length > 0) {
+                const files = Array.from(this.files);
+                const total = files.length;
+                logAction(`Starting bulk ingestion of ${total} media cluster(s)...`);
+                
+                document.getElementById('loader').style.display = 'block';
+                document.getElementById('scan-line').style.display = 'block';
+                document.getElementById('verdictBox').className = "verdict-box v-pending";
+                document.getElementById('verdictBox').innerText = "INGESTING BATCH...";
+                document.getElementById('leaderboardSection').style.display = 'none';
 
-            const results = [];
-            
-            for (let i = 0; i < total; i++) {
-                const file = files[i];
-                logAction(`Processing ${i+1}/${total}: ${file.name}`);
-                videoPreview.src = URL.createObjectURL(file);
-                document.getElementById('transcriptBox').innerHTML = `<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div><div class="mt-2">Processing ${file.name}...</div></div>`;
+                const results = [];
+                
+                for (let i = 0; i < total; i++) {
+                    const file = files[i];
+                    logAction(`Processing ${i+1}/${total}: ${file.name}`);
+                    videoPreview.src = URL.createObjectURL(file);
+                    document.getElementById('transcriptBox').innerHTML = `<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div><div class="mt-2">Processing ${file.name}...</div></div>`;
 
-                const formData = new FormData();
-                formData.append("video", file);
+                    const formData = new FormData();
+                    formData.append("video", file);
 
-                try {
-                    const resp = await fetch("/analyze", { method: "POST", body: formData });
-                    if (!resp.ok) {
-                        const errorBody = await resp.text();
-                        console.error("SERVER ERROR HTML DETECTED (ANALYZE BATCH):", errorBody);
-                        throw new Error(`Analysis Failed (${resp.status})`);
-                    }
-                    const data = await resp.json();
-                    
-                    if (data.status === "success") {
-                        let finalScore = 0;
-                        let pb = { technical: 0, integrity: 0, communication: 0 };
-                        if (data.analysis._id) {
-                            try {
-                                const repData = await fetchReport(data.analysis._id);
-                                finalScore = repData.final_score || 0;
-                                pb = repData.performance_breakdown || pb;
-                                data.analysis.report = repData;
-                            } catch (e) {
-                                console.warn("Report fetch failed for batch item:", e);
-                            }
+                    try {
+                        const resp = await fetch("/analyze", { method: "POST", body: formData });
+                        if (!resp.ok) {
+                            const errorBody = await resp.text();
+                            console.error("SERVER ERROR HTML DETECTED (ANALYZE BATCH):", errorBody);
+                            throw new Error(`Analysis Failed (${resp.status})`);
                         }
+                        const data = await resp.json();
                         
-                        results.push({
-                            file: file.name,
-                            analysis: data.analysis,
-                            final_score: finalScore,
-                            pb: pb
-                        });
-                        // Show last result on main UI
-                        renderMncResults(data.analysis);
-                        logAction(`Analysis complete for ${file.name}`);
-                    } else {
-                        throw new Error(data.message || "Unknown neural processing error.");
-                    }
-                } catch (e) {
-                    logAction("NODE ERROR: " + e.message);
-                    if (i === total - 1) { // If it's the last video and failed, show failure on UI
-                        document.getElementById('verdictBox').className = "verdict-box v-flag";
-                        document.getElementById('verdictBox').innerText = "ENGINE FAILURE";
-                        document.getElementById('transcriptBox').innerHTML = `<div class='text-danger'><b>Error Details:</b><br>${e.message}</div>`;
-                    }
-                } // Continue to next video if error happens
-            }
+                        if (data.status === "success") {
+                            let finalScore = 0;
+                            let pb = { technical: 0, integrity: 0, communication: 0 };
+                            if (data.analysis._id) {
+                                try {
+                                    const repData = await fetchReport(data.analysis._id);
+                                    finalScore = repData.final_score || 0;
+                                    pb = repData.performance_breakdown || pb;
+                                    data.analysis.report = repData;
+                                } catch (e) {
+                                    console.warn("Report fetch failed for batch item:", e);
+                                }
+                            }
+                            
+                            results.push({
+                                file: file.name,
+                                analysis: data.analysis,
+                                final_score: finalScore,
+                                pb: pb
+                            });
+                            // Show last result on main UI
+                            renderMncResults(data.analysis);
+                            logAction(`Analysis complete for ${file.name}`);
+                        } else {
+                            throw new Error(data.message || "Unknown neural processing error.");
+                        }
+                    } catch (e) {
+                        logAction("NODE ERROR: " + e.message);
+                        if (i === total - 1) { // If it's the last video and failed, show failure on UI
+                            document.getElementById('verdictBox').className = "verdict-box v-flag";
+                            document.getElementById('verdictBox').innerText = "ENGINE FAILURE";
+                            document.getElementById('transcriptBox').innerHTML = `<div class='text-danger'><b>Error Details:</b><br>${e.message}</div>`;
+                        }
+                    } // Continue to next video if error happens
+                }
 
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('scan-line').style.display = 'none';
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('scan-line').style.display = 'none';
 
-            if (results.length > 0) {
-                renderLeaderboard(results);
+                if (results.length > 0) {
+                    renderLeaderboard(results);
+                }
             }
-        }
-    });
+        });
+    } else {
+        console.error("Element not found: videoSelect");
+    }
 
     function renderLeaderboard(results) {
-        document.getElementById('leaderboardSection').style.display = 'flex';
+        const leaderboardSection = document.getElementById('leaderboardSection');
+        if (leaderboardSection) leaderboardSection.style.display = 'flex';
+        
         const tbody = document.getElementById('leaderboardBody');
+        if (!tbody) {
+            console.warn("Element not found: leaderboardBody");
+            return;
+        }
         tbody.innerHTML = '';
 
         // Sort by final score descending
@@ -1032,6 +1042,10 @@
 
     function logAction(msg) {
         const log = document.getElementById('miniLog');
+        if (!log) {
+            console.warn("Element not found: miniLog");
+            return;
+        }
         const ts = new Date().toLocaleTimeString('en-GB');
         const div = document.createElement('div');
         div.className = "console-line";
@@ -1042,9 +1056,12 @@
     function renderMncResults(analysis) {
         if (!analysis || typeof analysis !== 'object') {
             logAction("DATA ERROR: Incomplete neural payload received.");
-            document.getElementById('verdictBox').className = "verdict-box v-flag";
-            document.getElementById('verdictBox').innerText = "DATA ERROR";
-            return;
+        const vBox = document.getElementById('verdictBox');
+        if (vBox) {
+            vBox.className = "verdict-box v-flag";
+            vBox.innerText = "DATA ERROR";
+        }
+        return;
         }
 
         const v = analysis.video || {};
@@ -1052,14 +1069,20 @@
         const reasons = Array.isArray(classification.reasons) ? classification.reasons : [];
         const verdict = classification.verdict || 'Unknown';
 
-        document.getElementById('kpiFaces').innerText = v.multiFaceFrames || 0;
-        document.getElementById('kpiGaze').innerText = Math.round(((v.gazeAwayFrames || 0) / (v.sampledFrames || 1)) * 100) + "%";
+        const kpiFaces = document.getElementById('kpiFaces');
+        if (kpiFaces) kpiFaces.innerText = v.multiFaceFrames || 0;
+
+        const kpiGaze = document.getElementById('kpiGaze');
+        if (kpiGaze) kpiGaze.innerText = Math.round(((v.gazeAwayFrames || 0) / (v.sampledFrames || 1)) * 100) + "%";
         
         const vBox = document.getElementById('verdictBox');
-        vBox.innerText = verdict.toUpperCase();
-        vBox.className = "verdict-box " + (verdict === 'Clean' ? 'v-clean' : 'v-flag');
+        if (vBox) {
+            vBox.innerText = verdict.toUpperCase();
+            vBox.className = "verdict-box " + (verdict === 'Clean' ? 'v-clean' : 'v-flag');
+        }
 
-        document.getElementById('transcriptBox').innerText = analysis.transcript || 'No verbal data captured.';
+        const transcriptBox = document.getElementById('transcriptBox');
+        if (transcriptBox) transcriptBox.innerText = analysis.transcript || 'No verbal data captured.';
 
         const emotionProbs = analysis.emotionProbabilities;
         if (emotionProbs && typeof emotionProbs === 'object' && Object.keys(emotionProbs).length > 0) {
@@ -1268,27 +1291,32 @@
     }
 
     // Load Metrics Chart (Health)
-    new Chart(document.getElementById('loadChart'), {
-        type: 'line',
-        data: {
-            labels: ['10:00', '10:05', '10:10', '10:15', '10:20', '10:25'],
-            datasets: [{ 
-                label: 'Inference Load', 
-                data: [42, 38, 55, 48, 62, 59], 
-                borderColor: '#4f46e5', 
-                backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                fill: true,
-                tension: 0.4 
-            }]
-        },
-        options: { 
-            plugins: { legend: { display:false } }, 
-            scales:{
-                x:{ grid:{display:false}, ticks:{color:'#64748b'} }, 
-                y:{ grid:{color:'#f1f5f9'}, ticks:{color:'#64748b'} }
-            } 
-        }
-    });
+    const loadChartEl = document.getElementById('loadChart');
+    if (loadChartEl) {
+        new Chart(loadChartEl, {
+            type: 'line',
+            data: {
+                labels: ['10:00', '10:05', '10:10', '10:15', '10:20', '10:25'],
+                datasets: [{ 
+                    label: 'Inference Load', 
+                    data: [42, 38, 55, 48, 62, 59], 
+                    borderColor: '#4f46e5', 
+                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                    fill: true,
+                    tension: 0.4 
+                }]
+            },
+            options: { 
+                plugins: { legend: { display:false } }, 
+                scales:{
+                    x:{ grid:{display:false}, ticks:{color:'#64748b'} }, 
+                    y:{ grid:{color:'#f1f5f9'}, ticks:{color:'#64748b'} }
+                } 
+            }
+        });
+    } else {
+        console.warn("Element not found: loadChart");
+    }
 
 </script>
 </body>
