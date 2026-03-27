@@ -115,65 +115,159 @@ def extract_text_from_pdf(file_bytes):
         print(f"PDF Extraction Error: {e}")
         return ""
 
-# --- Main Processor Function ---
+# --- Strict Validation Logic ---
+CAT_KEYWORDS = {
+    "Skills": ['python', 'java', 'c++', 'javascript', 'html', 'css', 'sql', 'react', 'django', 'flask', 'nodejs', 'mongodb', 'docker', 'aws', 'git', 'linux', 'machine learning'],
+    "Projects": ['project', 'app', 'system', 'platform', 'website', 'tool', 'bot', 'chatbot', 'github.com'],
+    "Workshops/Trainings": ['workshop', 'training', 'seminar', 'bootcamp', 'webinar', 'certification course'],
+    "Certifications": ['certification', 'certified', 'license', 'nptel', 'coursera', 'udemy', 'hackerrank', 'microsoft certified', 'aws certified'],
+    "Internships": ['internship', 'intern', 'trainee', 'summer intern'],
+    "Work Experience": ['job', 'experience', 'worked at', 'employment', 'senior', 'junior', 'developer at', 'engineer at']
+}
+
+CERT_ORGS = ['nptel', 'coursera', 'udemy', 'hackerrank', 'microsoft', 'google', 'aws', 'cisco', 'oracle', 'linkedin', 'edx', 'simplilearn']
+CERT_KEYS = ['certified', 'certificate', 'course', 'completed', 'issued by', 'license', 'certification']
+ROLE_INDICATORS = ['developer', 'engineer', 'intern', 'analyst', 'manager', 'lead', 'trainee', 'architect', 'specialist', 'associate', 'consultant']
+DURATION_PATTERN = r'(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|20\d{2}|present|months|years)'
+
+def calculate_communication_score(text):
+    """Heuristic logic for Communication Skill Evaluation (0-100%)."""
+    score = 65  # Base (Good starting point)
+    t_lower = text.lower()
+    
+    # 1. Structure (Bullet points/formatting)
+    bullets = len(re.findall(r'^[•\-\*]\s+', text, re.MULTILINE))
+    if bullets > 4: score += 10
+    
+    # 2. Professional Wording (Active Verbs)
+    pro_verbs = ['achieved', 'developed', 'managed', 'led', 'optimized', 'implemented', 'designed', 'coordinated', 'mentored']
+    found_verbs = [v for v in pro_verbs if v in t_lower]
+    score += min(len(found_verbs) * 2, 15)
+    
+    # 3. Clarity (Sentence Length Heuristic)
+    lines = [l for l in text.split('\n') if len(l.strip()) > 10]
+    if lines:
+        avg_words = sum(len(l.split()) for l in lines) / len(lines)
+        if avg_words < 18: score += 10 # Good conciseness
+        elif avg_words > 30: score -= 10 # Possible run-on sentences
+    
+    # 4. Professional Tone (Capitalization/Structure)
+    # Check if lines start with uppercase
+    up_lines = [l for l in lines if l[0].isupper()]
+    if len(up_lines) / len(lines) > 0.7: score += 5
+    
+    # 5. Grammar Red Flags (Simple Heuristic)
+    if ' i ' in text: score -= 5 # Informal case misuse
+    
+    return max(0, min(100, score))
 
 def extract_resume_metadata(file_stream) -> dict:
-    """Consolidated Rule-Based Evaluator."""
+    """Advanced & Strict HR Resume Analyzer AI."""
     # Read file content
     try:
         file_bytes = file_stream.read()
-        # In case the stream was already read elsewhere, we might need seek(0) in caller
     except AttributeError:
         file_bytes = file_stream
 
-    # Detect extension-like behavior (heuristic)
-    # Since we don't have filename here, we check file signature or try both
     text = extract_text_from_pdf(file_bytes)
-    if not text.strip(): # Fallback to docx if PDF yields nothing
+    if not text.strip():
         text = extract_text_from_docx(file_bytes)
     
     if not text.strip():
         return {"error": "Could not extract text from file.", "name": "Unknown"}
 
-    # Run Evaluator
-    skills_score, matched_skills, bonus_skills = score_skills(text)
-    exp_score, exp_details = score_experience(text)
-    proj_score, proj_details = score_projects(text)
-    edu_score, edu_detail = score_education(text)
-    ats_score, ats_matched = score_ats(text)
+    t_lower = _text_lower(text)
+    lines = [line.strip() for line in text.split('\n') if line.strip()]
+    report_data = {}
+    found_count = 0
 
-    # Calculate Total
-    total = round(skills_score + exp_score + proj_score + edu_score + ats_score, 1)
+    # 1. Skills (Direct Scan)
+    skills_found = [s for s in CAT_KEYWORDS["Skills"] if s in t_lower]
+    report_data["Skills"] = {"status": "FOUND" if skills_found else "NOT FOUND", "details": ", ".join(skills_found[:10]) if skills_found else "None"}
+    if skills_found: found_count += 1
+
+    # 2. Projects (Content Validation)
+    projects_found = []
+    for line in lines:
+        if any(k in line.lower() for k in CAT_KEYWORDS["Projects"]) and len(line) > 12:
+            projects_found.append(line)
+    report_data["Projects"] = {"status": "FOUND" if projects_found else "NOT FOUND", "details": ", ".join([p[:45] for p in projects_found[:3]]) if projects_found else "None"}
+    if projects_found: found_count += 1
+
+    # 3. Workshops (Content Validation)
+    workshops_found = [line for line in lines if any(k in line.lower() for k in CAT_KEYWORDS["Workshops/Trainings"]) and len(line) > 10]
+    report_data["Workshops/Trainings"] = {"status": "FOUND" if workshops_found else "NOT FOUND", "details": ", ".join(workshops_found[:2]) if workshops_found else "None"}
+    if workshops_found: found_count += 1
+
+    # 4. Certifications (STRICT: Key + Valid Org)
+    certs_found = []
+    for line in lines:
+        l_low = line.lower()
+        has_key = any(k in l_low for k in CERT_KEYS)
+        has_org = any(o in l_low for o in CERT_ORGS)
+        if has_key and has_org:
+            certs_found.append(line)
+    report_data["Certifications"] = {"status": "FOUND" if certs_found else "NOT FOUND", "details": ", ".join(certs_found[:2]) if certs_found else "None"}
+    if certs_found: found_count += 1
+
+    # 5. Internships (STRICT: Key + Role/Duration)
+    interns_found = []
+    for line in lines:
+        l_low = line.lower()
+        if 'intern' in l_low:
+            # Must also mention a generic role indicator OR a date pattern to be valid experience
+            has_role = any(r in l_low for r in ROLE_INDICATORS)
+            has_dur = bool(re.search(DURATION_PATTERN, l_low))
+            if has_role or has_dur:
+                interns_found.append(line)
+    report_data["Internships"] = {"status": "FOUND" if interns_found else "NOT FOUND", "details": ", ".join(interns_found[:2]) if interns_found else "None"}
+    if interns_found: found_count += 1
+
+    # 6. Work Experience (STRICT: Not an address, must have role/position + duration)
+    work_found = []
+    for line in lines:
+        l_low = line.lower()
+        # Filter out common address noise
+        if any(noise in l_low for noise in ['street', 'road', 'nagar', 'colony', 'apartment', 'house no']): 
+            continue
+            
+        has_exp_key = any(k in l_low for k in ['experience', 'worked at', 'employment', 'developer at', 'engineer at'])
+        has_role = any(r in l_low for r in ROLE_INDICATORS)
+        has_dur = bool(re.search(DURATION_PATTERN, l_low))
+        
+        if (has_exp_key and (has_role or has_dur)) or (has_role and has_dur):
+            work_found.append(line)
+            
+    report_data["Work Experience"] = {"status": "FOUND" if work_found else "NOT FOUND", "details": ", ".join(work_found[:2]) if work_found else "None"}
+    if work_found: found_count += 1
+
+    # Communication Skill Logic
+    comm_percent = calculate_communication_score(text)
     
-    # Recommendation Logic
-    recommendation = "Reject"
-    if total >= 35: recommendation = "Strong Hire"
-    elif total >= 25: recommendation = "Consider"
+    # Format the strict report string
+    formatted_report = (
+        "Candidate Evaluation Report:\n\n"
+        f"Skills: {report_data['Skills']['status']}\nDetails: {report_data['Skills']['details']}\n\n"
+        f"Projects: {report_data['Projects']['status']}\nDetails: {report_data['Projects']['details']}\n\n"
+        f"Workshops/Trainings: {report_data['Workshops/Trainings']['status']}\nDetails: {report_data['Workshops/Trainings']['details']}\n\n"
+        f"Certifications: {report_data['Certifications']['status']}\nDetails: {report_data['Certifications']['details']}\n\n"
+        f"Internships: {report_data['Internships']['status']}\nDetails: {report_data['Internships']['details']}\n\n"
+        f"Work Experience: {report_data['Work Experience']['status']}\nDetails: {report_data['Work Experience']['details']}\n\n"
+        f"Communication Skills: {comm_percent}%"
+    )
 
-    # Formatting Strengths/Weaknesses
-    strengths = []
-    weaknesses = []
-    if 'python' in matched_skills: strengths.append("Proficient in Python core")
-    else: weaknesses.append("Missing core Python requirement")
-    if len(matched_skills) >= 3: strengths.append(f"Strong skill alignment ({len(matched_skills)} key skills)")
-    if exp_score >= 5: strengths.append("Verified professional internship/work exp")
-    if proj_score < 4: weaknesses.append("Project methodology lacks measurable data")
+    # Scoring
+    completeness_score = round((found_count / 6) * 10, 1)
 
     return {
-        "name": text.split('\n')[0][:30] or "Candidate",
-        "top_5_technical_skills": matched_skills[:5],
-        "years_of_experience": 2 if exp_score > 5 else 1,
-        "last_job_title": "Software Developer" if exp_score > 5 else "Fresher",
-        "resume_score": int((total / 50) * 100), # Normalized to 100
-        "detailed_scores": {
-            "skills": skills_score,
-            "experience": exp_score,
-            "projects": proj_score,
-            "education": edu_score,
-            "ats": ats_score
-        },
-        "strengths": strengths,
-        "weaknesses": weaknesses,
-        "recommendation": recommendation,
-        "raw_text_preview": text[:200]
+        "name": lines[0][:30] if lines else "Candidate",
+        "resume_score": int(completeness_score * 10),
+        "completeness_score": completeness_score,
+        "communication_skills": comm_percent,
+        "formatted_report": formatted_report,
+        "evaluation_data": report_data,
+        "top_5_technical_skills": skills_found[:5],
+        "strengths": ["Clear communication profile" if comm_percent > 80 else "Strong technical alignment"],
+        "weaknesses": ["Improve resume detail structure" if comm_percent < 60 else "N/A"],
+        "recommendation": "Strong Hire" if (completeness_score >= 8 and comm_percent >= 75) else "Consider" if completeness_score >= 5 else "Reject"
     }
