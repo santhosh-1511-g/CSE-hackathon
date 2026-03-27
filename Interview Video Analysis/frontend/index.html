@@ -191,13 +191,9 @@
         <i class="bi bi-database"></i>
         <span>Integrity Archive</span>
       </div>
-      <div class="nav-btn" onclick="switchView('view-health', event)">
-        <i class="bi bi-shield-check"></i>
-        <span>Neural Node</span>
-      </div>
-      <div class="nav-btn" onclick="switchView('view-settings', event)">
-        <i class="bi bi-gear"></i>
-        <span>Global Policy</span>
+      <div class="nav-btn" onclick="switchView('view-admin', event); initAdminPanel();">
+        <i class="bi bi-shield-lock"></i>
+        <span>Admin Panel</span>
       </div>
       <div class="mt-4 px-3" style="display:none;">
         <button class="btn btn-primary w-100 rounded-pill fw-bold" onclick="showAddCandidateModal()">
@@ -244,43 +240,26 @@
       
       <!-- VIEW: MONITOR -->
       <div id="view-monitor" class="m-view active">
-        <div class="row g-4">
-          <!-- LEFT: INTAKE FORM -->
-          <div class="col-lg-5">
-            <div class="m-card h-100">
-               <div class="d-flex align-items-center gap-3 mb-4">
-                  <div class="brand-dot" style="width:10px; height:10px;"></div>
-                  <h6 class="text-bright fw-bold mb-0 uppercase tracking-widest" style="font-size:0.75rem;">New Candidate Onboarding</h6>
-               </div>
-               
-               <div class="space-y-4">
-                  <div class="mb-4">
-                     <label class="form-label small fw-bold text-dim">FULL NAME</label>
-                     <input type="text" id="dash-cand-name" class="form-control form-control-lg rounded-4 border-2" style="background:#f8fafc;" placeholder="e.g. Santhosh Kumar">
-                  </div>
-                  
-                  <div class="mb-4">
-                     <label class="form-label small fw-bold text-dim">RESUME (PDF / DOCX)</label>
-                     <div class="p-4 border-2 border-dashed rounded-4 text-center" style="background:#f1f5f9; border-color:#cbd5e1;">
-                        <input type="file" id="dash-cand-resume" accept=".pdf,.docx" hidden onchange="updateFileName('dash-resume-name', this)">
-                        <button class="btn btn-outline-primary btn-sm rounded-pill px-4 mb-2" onclick="document.getElementById('dash-cand-resume').click()">Select Document</button>
-                        <div id="dash-resume-name" class="small fw-bold text-primary"></div>
-                     </div>
-                  </div>
-
-                  <div class="mb-4">
-                     <label class="form-label small fw-bold text-dim">INTERVIEW MEDIA (MP4)</label>
-                     <div class="p-4 border-2 border-dashed rounded-4 text-center" style="background:#f1f5f9; border-color:#cbd5e1;">
-                        <input type="file" id="dash-cand-video" accept="video/*" hidden onchange="updateFileName('dash-video-name', this)">
-                        <button class="btn btn-outline-primary btn-sm rounded-pill px-4 mb-2" onclick="document.getElementById('dash-cand-video').click()">Select Video</button>
-                        <div id="dash-video-name" class="small fw-bold text-primary"></div>
-                     </div>
-                  </div>
-
-                  <button id="dash-finalize-btn" class="btn btn-premium w-100 py-3 rounded-pill fw-bold" onclick="finalizeDashCandidate()">
-                     <i class="bi bi-rocket-takeoff me-2"></i> Analyze Candidate
-                  </button>
-               </div>
+        <div class="row g-5">
+          <div class="col-lg-8">
+            <div class="scan-stage mb-4">
+                <div id="scan-line" class="hud-scanner"></div>
+                <div class="hud-overlay">
+                    <div class="hud-top">
+                        <div class="hud-badge"><div class="brand-dot pulse"></div>SECURE STREAM // 256-BIT</div>
+                        <div class="hud-badge">OFT: POSITIVE</div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <div class="hud-badge" id="frame-counter">FRAME: 00000</div>
+                        <div class="hud-badge text-indigo">NEURAL-LINK V4</div>
+                    </div>
+                </div>
+                <video id="videoPreview" class="video-feed" playsinline></video>
+                <div id="loader" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); display:none; z-index:20; text-align:center;">
+                    <div class="spinner-border text-primary" style="width:3rem; height:3rem;"></div>
+                    <div class="mt-3 small text-white fw-bold">ANALYZING CANDIDATE NEURONS...</div>
+                    <button class="btn btn-outline-light btn-sm mt-3 rounded-pill px-3" onclick="location.reload()" style="font-size:0.7rem; opacity:0.7;">Cancel & Refresh</button>
+                </div>
             </div>
           </div>
 
@@ -349,31 +328,87 @@
         </div>
       </div>
 
-      <!-- VIEW: HEALTH -->
-      <div id="view-health" class="m-view" style="display:none;">
+      <!-- VIEW: ADMIN PANEL -->
+      <div id="view-admin" class="m-view" style="display:none;">
          <div class="row g-4">
-            <div class="col-md-6">
+            <!-- Left: System Health -->
+            <div class="col-lg-8">
+                <div class="m-card mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="kpi-title">Neural Cluster Health</div>
+                        <div class="hud-badge" id="admin-db-status">DB: CONNECTING...</div>
+                    </div>
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="kpi-tile">
+                                <div class="kpi-title">CPU LOAD</div>
+                                <div id="admin-cpu-val" class="kpi-val">0%</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="kpi-tile" style="border-color:var(--accent-success);">
+                                <div class="kpi-title">RAM UTIL</div>
+                                <div id="admin-ram-val" class="kpi-val">0%</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="kpi-tile" style="border-color:var(--accent-warning);">
+                                <div class="kpi-title">INFERENCE LATENCY</div>
+                                <div id="admin-latency-val" class="kpi-val">---</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-5">
+                        <canvas id="adminLoadChart" height="240"></canvas>
+                    </div>
+                </div>
+
                 <div class="m-card">
-                    <div class="kpi-title mb-4">Neural Cluster Clusters</div>
-                    <div class="d-flex flex-column gap-4">
-                        <div class="d-flex justify-content-between">
-                            <span class="text-bright">Inference Node A (Primary)</span>
-                            <span class="status-chip bg-success text-dark">OPERATIONAL</span>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <span class="text-bright">Cognitive Model V4</span>
-                            <span class="status-chip bg-success text-dark">HEALTHY</span>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <span class="text-bright">GPU Core Utilization</span>
-                            <span class="status-chip bg-warning text-dark">CPU FALLBACK</span>
-                        </div>
+                    <div class="kpi-title mb-4">Node Topology Status</div>
+                    <div id="admin-node-list" class="d-flex flex-column gap-3">
+                        <!-- Dynamic Injected Nodes -->
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
+
+            <!-- Right: System Controls -->
+            <div class="col-lg-4">
+                <div class="m-card mb-4" style="border-top: 4px solid var(--accent-danger);">
+                    <div class="kpi-title text-danger mb-4"><i class="bi bi-exclamation-triangle-fill"></i> Danger Zone</div>
+                    <p class="small text-dim mb-4">Destructive administrative actions. These affect the entire global cluster.</p>
+                    
+                    <button class="btn btn-outline-danger w-100 rounded-pill fw-bold mb-3" data-bs-toggle="modal" data-bs-target="#adminPurgeModal">
+                        <i class="bi bi-trash3-fill me-2"></i> Purge All Records
+                    </button>
+                    <p class="text-center" style="font-size:0.65rem; color:#94a3b8;">Irreversibly delete all candidate data and session logs.</p>
+                </div>
+
+                <div class="m-card mb-4">
+                    <div class="kpi-title mb-4">Global Configuration</div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-dim">AI SENSITIVITY</label>
+                        <input type="range" class="form-range" value="65">
+                        <div class="d-flex justify-content-between small text-dim mt-1">
+                            <span>Standard</span>
+                            <span>Strict</span>
+                        </div>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" checked id="autoFlagSwitch">
+                        <label class="form-check-label small fw-bold text-bright" for="autoFlagSwitch">Auto-Flag Gaze Anomaly</label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" checked id="deepSearchSwitch">
+                        <label class="form-check-label small fw-bold text-bright" for="deepSearchSwitch">Deep Semantic Inspection</label>
+                    </div>
+                    <button class="btn btn-premium w-100 mt-3" onclick="alert('Configuration saved to cluster nodes.')">Update Policy</button>
+                </div>
+
                 <div class="m-card">
-                    <canvas id="loadChart" height="200"></canvas>
+                    <div class="kpi-title mb-3">Admin Audit Log</div>
+                    <div id="adminLog" class="console" style="height:200px; border:none; background:transparent;">
+                        <div class="console-line"><span class="console-ts">21:58</span> System Administrator authenticated.</div>
+                    </div>
                 </div>
             </div>
          </div>
@@ -396,6 +431,29 @@
         <div class="d-flex gap-3 mt-4">
             <button type="button" class="btn btn-light rounded-pill px-4 w-100 fw-bold" data-bs-dismiss="modal">Cancel</button>
             <button type="button" id="confirmDeleteBtn" class="btn btn-danger rounded-pill px-4 w-100 fw-bold">Confirm Purge</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN GLOBAL PURGE MODAL -->
+<div class="modal fade" id="adminPurgeModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background:#fff; border:none; border-radius:24px; color:#1e293b; border-top: 5px solid var(--accent-danger);">
+      <div class="modal-header border-0 p-4">
+        <h5 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-octagon-fill me-2"></i>Global Data Purge</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 pt-0 text-center">
+        <div class="mb-4">
+            <i class="bi bi-cloud-slash text-danger" style="font-size:4rem;"></i>
+        </div>
+        <p class="fw-bold mb-2">Are you absolutely sure?</p>
+        <p class="text-dim small mb-4">This will irreversibly delete ALL candidate records, analysis reports, and session logs from the Neural Integrity Platform.</p>
+        <div class="d-flex gap-3 mt-4">
+            <button type="button" class="btn btn-light rounded-pill px-4 w-100 fw-bold" data-bs-dismiss="modal">Decline</button>
+            <button type="button" class="btn btn-danger rounded-pill px-4 w-100 fw-bold" onclick="purgeArchive()">Execute Purge</button>
         </div>
       </div>
     </div>
@@ -491,6 +549,7 @@
             <div class="spinner-border text-primary mb-3" style="width:3rem; height:3rem;"></div>
             <div class="fw-bold text-bright" id="loader-msg">ORCHESTRATING NEURAL NODES...</div>
             <div class="text-dim small mt-2">This may take a moment. Do not close this terminal.</div>
+            <button class="btn btn-outline-danger btn-sm mt-4 rounded-pill px-4" onclick="location.reload()" style="font-size:0.8rem; font-weight:700;">Halt & Sync Results</button>
         </div>
       </div>
     </div>
@@ -541,7 +600,7 @@
 
     function updateFileName(id, input) {
         if(input.files && input.files[0]) {
-            document.getElementById(id).innerText = "Selected: " + input.files[0].name;
+            document.getElementById(id).innerHTML = '<i class="bi bi-check-circle-fill text-success me-2"></i>Selected: ' + input.files[0].name;
         }
     }
 
@@ -688,6 +747,70 @@
         return await response.json();
     }
 
+    /**
+     * Universal Analysis Wrapper with Polling Watchdog
+     */
+    async function runAnalysisWithWatchdog(formData, candidateId, candidateName, loaderId) {
+        const loader = document.getElementById(loaderId);
+        if (loader) loader.style.display = 'block';
+        
+        let watchdog = null;
+        let isCompleted = false;
+
+        return new Promise(async (resolve, reject) => {
+            const cleanup = () => {
+                if (watchdog) clearInterval(watchdog);
+                if (loader) loader.style.display = 'none';
+                isCompleted = true;
+            };
+
+            // 1. Start Watchdog Polling
+            watchdog = setInterval(async () => {
+                try {
+                    let checkUrl = candidateId ? `/results/${candidateId}` : "/results";
+                    const checkResp = await fetch(checkUrl);
+                    if (checkResp.ok) {
+                        const checkData = await checkResp.json();
+                        let found = null;
+                        if (candidateId) {
+                            if (checkData.status === "Processed") found = checkData;
+                        } else {
+                            found = checkData.results.find(r => r.candidate_name === candidateName && r.status === "Processed");
+                        }
+
+                        if (found) {
+                            console.log("WATCHDOG: Done.");
+                            cleanup();
+                            resolve({ status: "success", analysis: found });
+                        }
+                    }
+                } catch (e) {}
+            }, 5000);
+
+            // 2. Execute Primary Fetch
+            try {
+                const analyzeResp = await fetch("/analyze", { method: "POST", body: formData });
+                if (!analyzeResp.ok) throw new Error(`Engine Hang (${analyzeResp.status})`);
+                const analyzeData = await analyzeResp.json();
+                
+                if (analyzeData.status === "success") {
+                    cleanup();
+                    resolve(analyzeData);
+                } else {
+                    throw new Error(analyzeData.message || "Engine Error");
+                }
+            } catch (e) {
+                console.warn("Fetch failed, watchdog keeping it alive...", e);
+                setTimeout(() => {
+                    if (!isCompleted) {
+                        cleanup();
+                        reject(e);
+                    }
+                }, 30000);
+            }
+        });
+    }
+
     async function finalizeCandidate() {
         const name = document.getElementById('cand-name').value;
         const resumeFile = document.getElementById('cand-resume').files[0];
@@ -695,27 +818,19 @@
 
         if(!videoFile) return alert("Interview video is mandatory for analysis.");
 
-        // Show Loader
+        // Switch UI to step 3 (loader view)
         [1,2,3].forEach(s => document.getElementById(`step-${s}-content`).style.display = 'none');
-        document.getElementById('cand-loader').style.display = 'block';
 
         try {
-            // 1. Create Candidate
+            // 1. Create Candidate Entry
             document.getElementById('loader-msg').innerText = "GENERATING IDENTITY TETHER...";
             const createResp = await fetch("/api/candidate/create", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name: name })
             });
-
-            if (!createResp.ok) {
-                const errorBody = await createResp.text();
-                console.error("SERVER ERROR HTML DETECTED (CREATE):", errorBody);
-                throw new Error(`Candidate Creation Failed (${createResp.status})`);
-            }
-
+            if (!createResp.ok) throw new Error(`Creation Failed (${createResp.status})`);
             const createData = await createResp.json();
-            if(!createData.candidate_id) throw new Error("Failed to create candidate");
             const cid = createData.candidate_id;
 
             // 2. Upload Resume if exists
@@ -724,33 +839,33 @@
                 await uploadResume(cid, resumeFile);
             }
 
-            // 3. Analyze Video
-            document.getElementById('loader-msg').innerText = "EXECUTING BEHAVIORAL ANALYSIS (VIDEO)...";
+            // 3. Execution Phase via Watchdog Utility
+            document.getElementById('loader-msg').innerText = "ANALYZING CANDIDATE (WATCHDOG ACTIVE)...";
             const videoFormData = new FormData();
             videoFormData.append("candidate_id", cid);
             videoFormData.append("candidate_name", name);
             videoFormData.append("video", videoFile);
             
-            const analyzeResp = await fetch("/analyze", { method: "POST", body: videoFormData });
+            const result = await runAnalysisWithWatchdog(videoFormData, cid, name, 'cand-loader');
             
-            if (!analyzeResp.ok) {
-                const errorBody = await analyzeResp.text();
-                console.error("SERVER ERROR HTML DETECTED (ANALYZE):", errorBody);
-                throw new Error(`Video Analysis Failed (${analyzeResp.status})`);
-            }
+            if(result.status === "success") {
+                // explicitly show tick mark on step 3 before closing
+                document.getElementById('step-dot-3').className = "rounded-circle bg-success text-white d-flex align-items-center justify-content-center mx-auto shadow-sm";
+                document.getElementById('step-dot-3').innerHTML = '<i class="bi bi-check-lg"></i>';
+                const label3 = document.getElementById('step-label-3');
+                if (label3) label3.className = "small mt-2 fw-bold text-success";
+                document.getElementById('step-line-progress').style.width = "100%";
+                document.getElementById('loader-msg').innerHTML = '<i class="bi bi-check-circle-fill text-success me-2"></i>INGESTION COMPLETE!';
 
-            const analyzeData = await analyzeResp.json();
-
-            if(analyzeData.status === "success") {
-                addModal.hide();
-                logAction(`Successfully indexed candidate: ${name}`);
-                // Refresh global ranking
-                loadGlobalRanking();
-            } else {
-                throw new Error(analyzeData.message || "Analysis failure");
+                setTimeout(() => {
+                    addModal.hide();
+                    logAction(`Successfully indexed candidate: ${name}`);
+                    loadGlobalRanking();
+                }, 1500);
             }
         } catch (e) {
-            alert("Process Failed: " + e.message);
+            console.error("Process Failed:", e);
+            alert("Analysis Interrupted: " + e.message);
             prevStep(3);
             document.getElementById('cand-loader').style.display = 'none';
         }
@@ -773,25 +888,30 @@
             if (!resp.ok) throw new Error(`Results Fetch Failed (${resp.status})`);
             
             const data = await resp.json();
-             if(data && Array.isArray(data.results)) {
-                const results = [];
-                for(let row of data.results) {
-                    if(row.status === "Initialized") continue; // Skip incomplete
-                    
+            if(data && Array.isArray(data.results)) {
+                const filtered = data.results.filter(row => row.status !== "Initialized");
+                
+                logAction(`Fetching analysis reports for ${filtered.length} candidates...`);
+                
+                // Parallel fetching
+                const reportPromises = filtered.map(async (row) => {
                     try {
                         const repData = await fetchReport(row._id);
-                        results.push({
+                        return {
                             file: row.candidate_name || row._id,
                             analysis: { _id: row._id },
                             final_score: repData.final_score || 0,
                             pb: repData.performance_breakdown || {}
-                        });
+                        };
                     } catch(e) {
                         console.warn(`Could not fetch report for ${row._id}:`, e);
+                        return null;
                     }
-                }
-                renderLeaderboard(results);
-             }
+                });
+
+                const allReports = await Promise.all(reportPromises);
+                renderLeaderboard(allReports.filter(r => r !== null));
+            }
         } catch (e) {
             console.error("Global Ranking Error:", e);
             logAction("Ranking Error: " + e.message);
@@ -816,65 +936,62 @@
 
             const results = [];
             
-            for (let i = 0; i < total; i++) {
-                const file = files[i];
-                logAction(`Processing ${i+1}/${total}: ${file.name}`);
-                videoPreview.src = URL.createObjectURL(file);
-                document.getElementById('transcriptBox').innerHTML = `<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div><div class="mt-2">Processing ${file.name}...</div></div>`;
+            try {
+                for (let i = 0; i < total; i++) {
+                    const file = files[i];
+                    logAction(`Processing ${i+1}/${total}: ${file.name}`);
+                    videoPreview.src = URL.createObjectURL(file);
+                    document.getElementById('transcriptBox').innerHTML = `<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div><div class="mt-2 text-bright">Analyzing ${file.name}...<br><small class="text-dim">Watchdog engaged</small></div></div>`;
 
-                const formData = new FormData();
-                formData.append("video", file);
+                    const formData = new FormData();
+                    formData.append("video", file);
+                    formData.append("candidate_name", file.name);
 
-                try {
-                    const resp = await fetch("/analyze", { method: "POST", body: formData });
-                    if (!resp.ok) {
-                        const errorBody = await resp.text();
-                        console.error("SERVER ERROR HTML DETECTED (ANALYZE BATCH):", errorBody);
-                        throw new Error(`Analysis Failed (${resp.status})`);
-                    }
-                    const data = await resp.json();
-                    
-                    if (data.status === "success") {
-                        let finalScore = 0;
-                        let pb = { technical: 0, integrity: 0, communication: 0 };
-                        if (data.analysis._id) {
-                            try {
-                                const repData = await fetchReport(data.analysis._id);
-                                finalScore = repData.final_score || 0;
-                                pb = repData.performance_breakdown || pb;
-                                data.analysis.report = repData;
-                            } catch (e) {
-                                console.warn("Report fetch failed for batch item:", e);
-                            }
-                        }
+                    try {
+                        // Use Universal Watchdog for bulk too
+                        const data = await runAnalysisWithWatchdog(formData, null, file.name, 'loader');
                         
-                        results.push({
-                            file: file.name,
-                            analysis: data.analysis,
-                            final_score: finalScore,
-                            pb: pb
-                        });
-                        // Show last result on main UI
-                        renderMncResults(data.analysis);
-                        logAction(`Analysis complete for ${file.name}`);
-                    } else {
-                        throw new Error(data.message || "Unknown neural processing error.");
-                    }
-                } catch (e) {
-                    logAction("NODE ERROR: " + e.message);
-                    if (i === total - 1) { // If it's the last video and failed, show failure on UI
-                        document.getElementById('verdictBox').className = "verdict-box v-flag";
-                        document.getElementById('verdictBox').innerText = "ENGINE FAILURE";
-                        document.getElementById('transcriptBox').innerHTML = `<div class='text-danger'><b>Error Details:</b><br>${e.message}</div>`;
-                    }
-                } // Continue to next video if error happens
-            }
-
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('scan-line').style.display = 'none';
-
-            if (results.length > 0) {
-                renderLeaderboard(results);
+                        if (data.status === "success") {
+                            let finalScore = 0;
+                            let pb = { technical: 0, integrity: 0, communication: 0 };
+                            if (data.analysis._id) {
+                                try {
+                                    const repData = await fetchReport(data.analysis._id);
+                                    finalScore = repData.final_score || 0;
+                                    pb = repData.performance_breakdown || pb;
+                                    data.analysis.report = repData;
+                                } catch (e) {
+                                    console.warn("Report fetch failed for batch item:", e);
+                                }
+                            }
+                            
+                            results.push({
+                                file: file.name,
+                                analysis: data.analysis,
+                                final_score: finalScore,
+                                pb: pb
+                            });
+                            // Show last result on main UI
+                            renderMncResults(data.analysis);
+                            logAction(`Analysis complete for ${file.name}`);
+                        }
+                    } catch (e) {
+                        logAction("NODE ERROR: " + e.message);
+                        if (i === total - 1 && results.length === 0) {
+                            document.getElementById('verdictBox').className = "verdict-box v-flag";
+                            document.getElementById('verdictBox').innerText = "ENGINE FAILURE";
+                        }
+                    } 
+                }
+            } catch (outerErr) {
+                console.error("Bulk process failed:", outerErr);
+                logAction("MAJOR ERROR: " + outerErr.message);
+            } finally {
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('scan-line').style.display = 'none';
+                if (results.length > 0) {
+                    renderLeaderboard(results);
+                }
             }
         }
     });
@@ -1076,13 +1193,14 @@
     }
 
     function searchArchive() {
-        const q = document.getElementById('archiveSearch').value.toLowerCase();
+        const q = document.getElementById('archiveSearch').value.toLowerCase().trim();
         const filtered = archiveData.filter(d => {
             if (!d || typeof d !== 'object') return false;
+            const nameMatch = d.candidate_name ? d.candidate_name.toLowerCase().includes(q) : false;
             const idMatch = d._id ? String(d._id).toLowerCase().includes(q) : false;
             const verdictMatch = (d.classification && d.classification.verdict) 
                 ? d.classification.verdict.toLowerCase().includes(q) : false;
-            return idMatch || verdictMatch;
+            return nameMatch || idMatch || verdictMatch;
         });
         renderArchive(filtered);
     }
@@ -1161,28 +1279,133 @@
         }
     }
 
-    // Load Metrics Chart (Health)
-    new Chart(document.getElementById('loadChart'), {
-        type: 'line',
-        data: {
-            labels: ['10:00', '10:05', '10:10', '10:15', '10:20', '10:25'],
-            datasets: [{ 
-                label: 'Inference Load', 
-                data: [42, 38, 55, 48, 62, 59], 
-                borderColor: '#4f46e5', 
-                backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                fill: true,
-                tension: 0.4 
-            }]
-        },
-        options: { 
-            plugins: { legend: { display:false } }, 
-            scales:{
-                x:{ grid:{display:false}, ticks:{color:'#64748b'} }, 
-                y:{ grid:{color:'#f1f5f9'}, ticks:{color:'#64748b'} }
-            } 
+
+    // --- ADMIN PANEL LOGIC ---
+    let adminChart = null;
+    let adminTimer = null;
+
+    function initAdminPanel() {
+        adminLogAction("Initializing Administrative Control Plane...");
+        if(adminTimer) clearInterval(adminTimer);
+        
+        // Initial Fetch
+        updateAdminStats();
+        // Poll every 5 seconds while in view
+        adminTimer = setInterval(() => {
+            if(document.getElementById('view-admin').classList.contains('active')) {
+                updateAdminStats();
+            }
+        }, 5000);
+    }
+
+    async function updateAdminStats() {
+        try {
+            const resp = await fetch("/api/admin/system/status");
+            if(!resp.ok) throw new Error("Status Fetch Failed");
+            const data = await resp.json();
+
+            // Update KPIs
+            document.getElementById('admin-cpu-val').innerText = `${Math.round(data.cpu)}%`;
+            document.getElementById('admin-ram-val').innerText = `${Math.round(data.ram)}%`;
+            document.getElementById('admin-latency-val').innerText = data.latency;
+            
+            const dbBadge = document.getElementById('admin-db-status');
+            dbBadge.innerText = `DB: ${data.db.toUpperCase()}`;
+            dbBadge.className = `hud-badge ${data.db === 'Connected' ? 'text-success' : 'text-danger'}`;
+
+            // Update Node List
+            const nodeList = document.getElementById('admin-node-list');
+            nodeList.innerHTML = data.nodes.map(node => `
+                <div class="d-flex justify-content-between align-items-center p-3 rounded-4" style="background:#f8fafc; border:1px solid #e2e8f0;">
+                    <span class="fw-bold text-bright">${node.name}</span>
+                    <span class="status-chip ${node.status === 'OPERATIONAL' || node.status === 'HEALTHY' ? 'bg-success-mnc' : 'bg-danger-mnc'} text-dark">${node.status}</span>
+                </div>
+            `).join('');
+
+            // Update Chart
+            updateAdminChart(data.cpu);
+
+        } catch (e) {
+            console.error("Admin Update Error:", e);
+            adminLogAction(`Connection Error: ${e.message}`);
         }
-    });
+    }
+
+    function updateAdminChart(newVal) {
+        const ctx = document.getElementById('adminLoadChart').getContext('2d');
+        const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        
+        if(!adminChart) {
+            adminChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [now],
+                    datasets: [{ 
+                        label: 'Inference Load (%)', 
+                        data: [newVal], 
+                        borderColor: '#4f46e5', 
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        fill: true,
+                        tension: 0.4 
+                    }]
+                },
+                options: { 
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display:false } }, 
+                    scales:{
+                        x:{ grid:{display:false}, ticks:{color:'#64748b'} }, 
+                        y:{ grid:{color:'#f1f5f9'}, ticks:{color:'#64748b'}, min: 0, max: 100 }
+                    } 
+                }
+            });
+        } else {
+            adminChart.data.labels.push(now);
+            adminChart.data.datasets[0].data.push(newVal);
+            if(adminChart.data.labels.length > 15) {
+                adminChart.data.labels.shift();
+                adminChart.data.datasets[0].data.shift();
+            }
+            adminChart.update('none');
+        }
+    }
+
+    function adminLogAction(msg) {
+        const log = document.getElementById('adminLog');
+        const ts = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        const div = document.createElement('div');
+        div.className = "console-line";
+        div.innerHTML = `<span class="console-ts">${ts}</span> ${msg}`;
+        log.prepend(div);
+    }
+
+    function confirmPurgeArchive() {
+        // Redundant with data-bs-toggle but kept for script safety
+        const modal = new bootstrap.Modal(document.getElementById('adminPurgeModal'));
+        modal.show();
+    }
+
+    async function purgeArchive() {
+        const modalEl = document.getElementById('adminPurgeModal');
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.hide();
+        
+        adminLogAction("Initiating global data purge...");
+        try {
+            const resp = await fetch("/api/admin/results/purge", { method: "DELETE" });
+            const data = await resp.json();
+            if(data.status === "success") {
+                adminLogAction(`Successfully purged ${data.count} records.`);
+                if(typeof loadHistoryArchive === 'function') loadHistoryArchive();
+                alert(`Purge Complete: ${data.count} records removed.`);
+            } else {
+                throw new Error(data.error || "Purge Failed");
+            }
+        } catch (e) {
+            adminLogAction(`Purge Error: ${e.message}`);
+            alert(`Error: ${e.message}`);
+        }
+    }
 
 </script>
 </body>

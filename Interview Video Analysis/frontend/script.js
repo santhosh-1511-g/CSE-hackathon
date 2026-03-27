@@ -49,7 +49,6 @@ async function uploadVideo() {
     }
 
     const data = await response.json();
-    loader.style.display = "none";
 
     if (data.status === "success") {
       const a = data.analysis;
@@ -121,11 +120,12 @@ async function uploadVideo() {
       reasonsList.appendChild(li);
     }
   } catch (err) {
-    loader.style.display = "none";
     verdictBadge.textContent = "Network error";
     verdictBadge.className = "badge bg-danger";
     const li = document.createElement('li');
     li.textContent = err.message;
     reasonsList.appendChild(li);
+  } finally {
+    loader.style.display = "none";
   }
 }

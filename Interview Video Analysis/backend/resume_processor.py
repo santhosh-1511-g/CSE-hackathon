@@ -1,17 +1,17 @@
-import zipfile
-import xml.etree.ElementTree as ET
+import pdfplumber
+# import google.generativeai as genai  # Moved inside to save memory
+
 import os
 import re
 import pdfplumber
 import io
 
-# --- Job Role Config (Ported from Resume Project) ---
-REQUIRED_SKILLS = ['python', 'django', 'sql', 'data structures', 'problem solving']
-BONUS_SKILLS = ['git', 'rest api', 'html', 'css', 'javascript', 'machine learning',
-                'flask', 'postgresql', 'mysql', 'sqlite', 'docker', 'linux', 'java', 'c++']
-ATS_KEYWORDS = ['software developer', 'python', 'django', 'sql', 'data structures',
-                'problem solving', 'api', 'backend', 'database', 'object oriented',
-                'oop', 'algorithms', 'git', 'agile', 'rest']
+def construct_gemini_client():
+    # Attempt to load from env, user will need to supply it
+    api_key = os.environ.get("GEMINI_API_KEY", "")
+    if api_key:
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
 
 def _text_lower(text):
     return text.lower()
@@ -139,135 +139,41 @@ def calculate_communication_score(text):
     bullets = len(re.findall(r'^[•\-\*]\s+', text, re.MULTILINE))
     if bullets > 4: score += 10
     
-    # 2. Professional Wording (Active Verbs)
-    pro_verbs = ['achieved', 'developed', 'managed', 'led', 'optimized', 'implemented', 'designed', 'coordinated', 'mentored']
-    found_verbs = [v for v in pro_verbs if v in t_lower]
-    score += min(len(found_verbs) * 2, 15)
-    
-    # 3. Clarity (Sentence Length Heuristic)
-    lines = [l for l in text.split('\n') if len(l.strip()) > 10]
-    if lines:
-        avg_words = sum(len(l.split()) for l in lines) / len(lines)
-        if avg_words < 18: score += 10 # Good conciseness
-        elif avg_words > 30: score -= 10 # Possible run-on sentences
-    
-    # 4. Professional Tone (Capitalization/Structure)
-    # Check if lines start with uppercase
-    up_lines = [l for l in lines if l[0].isupper()]
-    if len(up_lines) / len(lines) > 0.7: score += 5
-    
-    # 5. Grammar Red Flags (Simple Heuristic)
-    if ' i ' in text: score -= 5 # Informal case misuse
-    
-    return max(0, min(100, score))
+    prompt = f"""
+Extract these fields from the resume text into a strict JSON:
+- name (string)
+- top_5_technical_skills (list of strings, normalized lowercase)
+- years_of_experience (integer)
+- last_job_title (string)
+- resume_score (integer, 1-100)
 
-def extract_resume_metadata(file_stream) -> dict:
-    """Advanced & Strict HR Resume Analyzer AI."""
-    # Read file content
+RETURN ONLY THE JSON.
+
+Resume Text:
+{text}
+"""
+    # Note: Using gemini-3-flash as requested by user
     try:
-        file_bytes = file_stream.read()
-    except AttributeError:
-        file_bytes = file_stream
-
-    text = extract_text_from_pdf(file_bytes)
-    if not text.strip():
-        text = extract_text_from_docx(file_bytes)
-    
-    if not text.strip():
-        return {"error": "Could not extract text from file.", "name": "Unknown"}
-
-    t_lower = _text_lower(text)
-    lines = [line.strip() for line in text.split('\n') if line.strip()]
-    report_data = {}
-    found_count = 0
-
-    # 1. Skills (Direct Scan)
-    skills_found = [s for s in CAT_KEYWORDS["Skills"] if s in t_lower]
-    report_data["Skills"] = {"status": "FOUND" if skills_found else "NOT FOUND", "details": ", ".join(skills_found[:10]) if skills_found else "None"}
-    if skills_found: found_count += 1
-
-    # 2. Projects (Content Validation)
-    projects_found = []
-    for line in lines:
-        if any(k in line.lower() for k in CAT_KEYWORDS["Projects"]) and len(line) > 12:
-            projects_found.append(line)
-    report_data["Projects"] = {"status": "FOUND" if projects_found else "NOT FOUND", "details": ", ".join([p[:45] for p in projects_found[:3]]) if projects_found else "None"}
-    if projects_found: found_count += 1
-
-    # 3. Workshops (Content Validation)
-    workshops_found = [line for line in lines if any(k in line.lower() for k in CAT_KEYWORDS["Workshops/Trainings"]) and len(line) > 10]
-    report_data["Workshops/Trainings"] = {"status": "FOUND" if workshops_found else "NOT FOUND", "details": ", ".join(workshops_found[:2]) if workshops_found else "None"}
-    if workshops_found: found_count += 1
-
-    # 4. Certifications (STRICT: Key + Valid Org)
-    certs_found = []
-    for line in lines:
-        l_low = line.lower()
-        has_key = any(k in l_low for k in CERT_KEYS)
-        has_org = any(o in l_low for o in CERT_ORGS)
-        if has_key and has_org:
-            certs_found.append(line)
-    report_data["Certifications"] = {"status": "FOUND" if certs_found else "NOT FOUND", "details": ", ".join(certs_found[:2]) if certs_found else "None"}
-    if certs_found: found_count += 1
-
-    # 5. Internships (STRICT: Key + Role/Duration)
-    interns_found = []
-    for line in lines:
-        l_low = line.lower()
-        if 'intern' in l_low:
-            # Must also mention a generic role indicator OR a date pattern to be valid experience
-            has_role = any(r in l_low for r in ROLE_INDICATORS)
-            has_dur = bool(re.search(DURATION_PATTERN, l_low))
-            if has_role or has_dur:
-                interns_found.append(line)
-    report_data["Internships"] = {"status": "FOUND" if interns_found else "NOT FOUND", "details": ", ".join(interns_found[:2]) if interns_found else "None"}
-    if interns_found: found_count += 1
-
-    # 6. Work Experience (STRICT: Not an address, must have role/position + duration)
-    work_found = []
-    for line in lines:
-        l_low = line.lower()
-        # Filter out common address noise
-        if any(noise in l_low for noise in ['street', 'road', 'nagar', 'colony', 'apartment', 'house no']): 
-            continue
-            
-        has_exp_key = any(k in l_low for k in ['experience', 'worked at', 'employment', 'developer at', 'engineer at'])
-        has_role = any(r in l_low for r in ROLE_INDICATORS)
-        has_dur = bool(re.search(DURATION_PATTERN, l_low))
+        import google.generativeai as genai
+        model = genai.GenerativeModel(
+            model_name="gemini-1.5-flash",
+            system_instruction=system_instruction
+        )
         
-        if (has_exp_key and (has_role or has_dur)) or (has_role and has_dur):
-            work_found.append(line)
-            
-    report_data["Work Experience"] = {"status": "FOUND" if work_found else "NOT FOUND", "details": ", ".join(work_found[:2]) if work_found else "None"}
-    if work_found: found_count += 1
-
-    # Communication Skill Logic
-    comm_percent = calculate_communication_score(text)
-    
-    # Format the strict report string
-    formatted_report = (
-        "Candidate Evaluation Report:\n\n"
-        f"Skills: {report_data['Skills']['status']}\nDetails: {report_data['Skills']['details']}\n\n"
-        f"Projects: {report_data['Projects']['status']}\nDetails: {report_data['Projects']['details']}\n\n"
-        f"Workshops/Trainings: {report_data['Workshops/Trainings']['status']}\nDetails: {report_data['Workshops/Trainings']['details']}\n\n"
-        f"Certifications: {report_data['Certifications']['status']}\nDetails: {report_data['Certifications']['details']}\n\n"
-        f"Internships: {report_data['Internships']['status']}\nDetails: {report_data['Internships']['details']}\n\n"
-        f"Work Experience: {report_data['Work Experience']['status']}\nDetails: {report_data['Work Experience']['details']}\n\n"
-        f"Communication Skills: {comm_percent}%"
-    )
-
-    # Scoring
-    completeness_score = round((found_count / 6) * 10, 1)
-
-    return {
-        "name": lines[0][:30] if lines else "Candidate",
-        "resume_score": int(completeness_score * 10),
-        "completeness_score": completeness_score,
-        "communication_skills": comm_percent,
-        "formatted_report": formatted_report,
-        "evaluation_data": report_data,
-        "top_5_technical_skills": skills_found[:5],
-        "strengths": ["Clear communication profile" if comm_percent > 80 else "Strong technical alignment"],
-        "weaknesses": ["Improve resume detail structure" if comm_percent < 60 else "N/A"],
-        "recommendation": "Strong Hire" if (completeness_score >= 8 and comm_percent >= 75) else "Consider" if completeness_score >= 5 else "Reject"
-    }
+        response = model.generate_content(
+            prompt, 
+            generation_config={"response_mime_type": "application/json"}
+        )
+        
+        data = json.loads(response.text)
+        return data
+    except Exception as e:
+        print(f"[!] Resume Processing Failed: {e}")
+        return {
+            "name": "Unknown",
+            "top_5_technical_skills": [],
+            "years_of_experience": 0,
+            "last_job_title": "Unknown",
+            "resume_score": 0,
+            "error": str(e)
+        }

@@ -4,7 +4,8 @@ import tempfile
 from typing import Dict, Any, List, Tuple
 
 import numpy as np
-from deepface import DeepFace
+# from deepface import DeepFace # Moved inside to save memory
+
 import speech_recognition as sr
 import imageio_ffmpeg
 
@@ -49,7 +50,8 @@ def analyze_video_path(video_path: str) -> Dict[str, Any]:
     fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
     sample_every = max(int(fps), 1)  # sample ~1 frame/sec
-
+    identity_sample_every = max(int(fps * 10), 1) # Check identity once every 10s
+    
     # OpenCV Haar cascades for basic face/eye detection
     haar_dir = cv2.data.haarcascades
     face_cascade = cv2.CascadeClassifier(os.path.join(haar_dir, 'haarcascade_frontalface_default.xml'))
@@ -75,13 +77,20 @@ def analyze_video_path(video_path: str) -> Dict[str, Any]:
     center_gaze_thresh = max(width, height) * 0.12
     center_head_thresh = max(width, height) * 0.25
 
+    print(f"[*] Starting Video Analysis: {total_frames} frames total. Sampling every {sample_every} frames.")
+
     while True:
         ret, frame = cap.read()
         if not ret:
             break
+            
         if frame_index % sample_every != 0:
             frame_index += 1
             continue
+
+        if frame_index % (sample_every * 10) == 0:
+            progress = (frame_index / total_frames * 100) if total_frames > 0 else 0
+            print(f"    [>] Processing: {frame_index}/{total_frames} frames ({progress:.1f}%)")
 
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
@@ -99,20 +108,22 @@ def analyze_video_path(video_path: str) -> Dict[str, Any]:
             (x, y, w, h) = faces[0]
             face_crop = frame[y:y+h, x:x+w]
 
-            # Identity consistency using DeepFace embedding on cropped face
-            try:
-                if face_crop.size != 0:
-                    emb = DeepFace.represent(face_crop, model_name='Facenet512', enforce_detection=False)
-                    if emb and len(emb) > 0:
-                        vec = np.array(emb[0]['embedding'], dtype=np.float32)
-                        if first_face_embedding is None:
-                            first_face_embedding = vec
-                        else:
-                            sim = cosine_similarity(first_face_embedding, vec)
-                            if sim < 0.45:
-                                identity_mismatch_frames += 1
-            except Exception:
-                pass
+            # Identity consistency – ONLY every 10 seconds to save 90% processing time
+            if frame_index % identity_sample_every == 0:
+                try:
+                    from deepface import DeepFace  # Lazy load
+                    if face_crop.size != 0:
+                        if emb and len(emb) > 0:
+                            vec = np.array(emb[0]['embedding'], dtype=np.float32)
+                            if first_face_embedding is None:
+                                first_face_embedding = vec
+                            else:
+                                sim = cosine_similarity(first_face_embedding, vec)
+                                if sim < 0.45:
+                                    identity_mismatch_frames += 1
+                except Exception as e:
+                    print(f"    [!] DeepFace Error at frame {frame_index}: {e}")
+                    pass
 
             # Gaze heuristic: face center offset from frame center
             face_center = np.array([x + w/2.0, y + h/2.0])
@@ -138,6 +149,8 @@ def analyze_video_path(video_path: str) -> Dict[str, Any]:
         # Grab emotion once (first usable frame)
         if dominant_emotion is None:
             try:
+                from deepface import DeepFace  # Lazy load
+                print(f"    [LOG] Performing DeepFace Emotion Analysis at frame {frame_index}")
                 face_result = DeepFace.analyze(rgb, actions=['emotion'], enforce_detection=False)
                 if isinstance(face_result, list) and face_result:
                     dominant_emotion = face_result[0].get('dominant_emotion')
@@ -145,7 +158,8 @@ def analyze_video_path(video_path: str) -> Dict[str, Any]:
                 elif isinstance(face_result, dict):
                     dominant_emotion = face_result.get('dominant_emotion')
                     emotion_probs = face_result.get('emotion')
-            except Exception:
+            except Exception as e:
+                print(f"    [!] Emotion Analysis failed: {e}")
                 dominant_emotion = None
 
         frame_index += 1

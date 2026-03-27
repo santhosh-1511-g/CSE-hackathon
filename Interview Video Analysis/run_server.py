@@ -23,7 +23,7 @@ if not os.path.exists(server_path):
     sys.exit(1)
 
 # Change to backend directory
-os.chdir(backend_dir)
+# os.chdir(backend_dir)  # Removed to fix Flask reloader path issue
 
 # Add backend directory to Python path
 sys.path.insert(0, backend_dir)
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     
     try:
         from server import app
-        app.run(debug=True, host='127.0.0.1', port=5000, use_reloader=False)
+        app.run(debug=True, host='127.0.0.1', port=5000, use_reloader=True)
     except ImportError as e:
         print(f"[ERROR] Import error: {e}")
         print(f"Python path: {sys.path}")
