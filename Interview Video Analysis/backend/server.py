@@ -123,17 +123,36 @@ def analyze():
 
         def run_async_analysis(path, cid, name):
             try:
-                # Import here to avoid circular dependencies
+                # Perform analysis
                 from video_analysis import analyze_video_path, extract_audio_text
-                
+                from scoring_engine import get_weighted_score
+
                 app.logger.info(f"Background thread started for candidate {cid}")
                 
-                # Perform analysis
                 metrics = analyze_video_path(path)
                 transcript = extract_audio_text(path)
                 metrics["transcript"] = transcript
+
+                # Calculate Score & Integrity Index
+                gaze_away = metrics.get('video', {}).get('gazeAwayFrames', 0)
+                sampled = metrics.get('video', {}).get('sampledFrames', 1)
+                gaze_dev = gaze_away / sampled if sampled > 0 else 0
+                emotion_probs = metrics.get('emotionProbabilities', {})
+                resume_profile = None # In async we don't necessarily have it yet, or can fetch it
                 
+                # Fetch existing doc for resume_profile if cid exists
+                db = get_db_connection()
+                if db is not None and cid:
+                    doc = db.results.find_one({"_id": ObjectId(cid)})
+                    if doc:
+                        resume_profile = doc.get('resume_profile')
+                
+                report = get_weighted_score(transcript, gaze_dev, emotion_probs, resume_profile)
+                metrics["integrity_index"] = report.get("final_score", 0)
+                metrics["analysis_report"] = report
+
                 # Cleanup the temp file after analysis
+
                 if os.path.exists(path):
                     try:
                         os.remove(path)
