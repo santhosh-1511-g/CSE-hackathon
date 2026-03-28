@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS
 import os
@@ -13,6 +13,8 @@ import sys
 import io
 import threading
 import tempfile
+from fpdf import FPDF
+from datetime import datetime
 
 # Force UTF-8 for all console output on Windows
 if sys.platform == "win32":
@@ -275,6 +277,171 @@ def get_report(id):
         return jsonify(report)
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
+@app.route('/api/report/pdf/<id>', methods=['GET'])
+def download_pdf_report(id):
+    db = get_db_connection()
+    if db is None:
+        return jsonify({"error": "Database not available"}), 503
+    try:
+        doc = db.results.find_one({"_id": ObjectId(id)})
+        if not doc:
+            return jsonify({"error": "Not found"}), 404
+            
+        # 1. Gather all metrics (Reuse get_report logic)
+        transcript = doc.get('transcript', '')
+        video_data = doc.get('video', {})
+        gaze_away = video_data.get('gazeAwayFrames', 0)
+        sampled = video_data.get('sampledFrames', 1)
+        gaze_dev = gaze_away / sampled if sampled > 0 else 0
+        emotion = doc.get('emotionProbabilities', {})
+        resume_profile = doc.get('resume_profile', {
+            "role_match_score": 0, "technical_score": 0, "communication_score": 0, "overall_fit_score": 0,
+            "status": "PENDING", "reason": "Resume data pending.", "report_data": {}
+        })
+        
+        # 2. Get Advanced Multimodal Report
+        report = get_weighted_score(transcript, gaze_dev, emotion, resume_profile)
+        
+        # 3. Construct PDF using fpdf2
+        class EvaluationPDF(FPDF):
+            def header(self):
+                # Branding Header
+                self.set_fill_color(79, 70, 229) # Indigo 600
+                self.rect(0, 0, 210, 35, 'F')
+                self.set_font('helvetica', 'B', 24)
+                self.set_text_color(255, 255, 255)
+                self.cell(0, 25, 'PROCTORSHIELD EVALUATION', ln=True, align='C')
+                self.set_font('helvetica', 'I', 10)
+                self.cell(0, -5, 'COGNI.HIRE NEURAL ANALYSIS ENGINE v4.2', ln=True, align='C')
+                self.ln(20)
+
+            def footer(self):
+                self.set_y(-15)
+                self.set_font('helvetica', 'I', 8)
+                self.set_text_color(128, 128, 128)
+                self.cell(0, 10, f'Generated on {datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | Page ' + str(self.page_no()), align='C')
+
+        pdf = EvaluationPDF()
+        pdf.add_page()
+        pdf.set_auto_page_break(auto=True, margin=15)
+        
+        # Sanitization helper to prevent Helvetica encoding errors
+        def safe_text(text):
+            if not text: return ""
+            return str(text).encode('latin-1', 'replace').decode('latin-1')
+
+        # --- SECT 1: CANDIDATE INFO ---
+        pdf.set_font('helvetica', 'B', 16)
+        pdf.set_text_color(30, 41, 59) # Slate 800
+        pdf.cell(0, 10, safe_text(f'Candidate: {doc.get("candidate_name", "Anonymous Candidate")}'), ln=True)
+        pdf.set_font('helvetica', '', 11)
+        pdf.cell(0, 8, safe_text(f'Applied Position: {doc.get("selected_role", "General Talent Intake")}'), ln=True)
+        pdf.cell(0, 8, f'System ID: {id}', ln=True)
+        pdf.ln(10)
+
+        # --- SECT 2: OVERALL FIT ---
+        pdf.set_fill_color(248, 250, 252) # Slate 50
+        pdf.rect(10, pdf.get_y(), 190, 30, 'F')
+        pdf.set_font('helvetica', 'B', 12)
+        pdf.set_x(15)
+        pdf.cell(0, 10, 'OVERALL NEURAL FIT INDEX', ln=True)
+        pdf.set_font('helvetica', 'B', 28)
+        pdf.set_text_color(79, 70, 229) # Indigo
+        pdf.set_x(15)
+        pdf.cell(0, 15, f'{report.get("final_score", 0)}%', ln=True)
+        pdf.set_text_color(30, 41, 59)
+        pdf.ln(5)
+
+        # --- SECT 3: PERFORMANCE BREAKDOWN ---
+        pdf.set_font('helvetica', 'B', 14)
+        pdf.cell(0, 10, 'Diagnostic Breakdown', ln=True)
+        pdf.ln(2)
+        
+        breakdown = report.get('performance_breakdown', {})
+        metrics = [
+            ('Technical Depth', f"{breakdown.get('technical', 0)}%"),
+            ('Comm. Efficiency', f"{breakdown.get('communication', 0)}%"),
+            ('Integrity Pass Rate', f"{report.get('integrity_index', 0)}%"),
+            ('Soft Skills Bias', f"{breakdown.get('soft_skills', 0)}%")
+        ]
+        
+        pdf.set_font('helvetica', 'B', 10)
+        for label, val in metrics:
+            pdf.set_text_color(100, 116, 139) # Slate 500
+            pdf.cell(45, 10, label, border='B')
+            pdf.set_text_color(30, 41, 59)
+            pdf.cell(45, 10, val, border='B', ln=True)
+        
+        pdf.ln(10)
+
+        # --- SECT 4: HR EVALUATION REPORT ---
+        pdf.set_font('helvetica', 'B', 14)
+        pdf.cell(0, 10, 'Candidate Evaluation Report', ln=True)
+        pdf.ln(2)
+        
+        res = report.get('resume_profile', {})
+        status = res.get('status', 'PENDING')
+        pdf.set_fill_color(240, 253, 244) if status == 'SELECTED' else pdf.set_fill_color(255, 241, 242)
+        pdf.rect(10, pdf.get_y(), 190, 25, 'F')
+        pdf.set_font('helvetica', 'B', 11)
+        pdf.set_text_color(21, 128, 61) if status == 'SELECTED' else pdf.set_text_color(190, 18, 60)
+        pdf.set_x(15)
+        pdf.cell(0, 12, f'FINAL DECISION: {status}', ln=True)
+        pdf.set_font('helvetica', 'I', 9)
+        pdf.set_text_color(71, 85, 105) # Slate 600
+        pdf.set_x(15)
+        pdf.multi_cell(180, 5, safe_text(f'REASONING: {res.get("reason", "N/A")}'))
+        pdf.ln(10)
+
+        pdf.set_font('helvetica', 'B', 11)
+        pdf.set_text_color(30, 41, 59)
+        pdf.cell(95, 8, 'Key Strengths')
+        pdf.cell(95, 8, 'Missing Skills', ln=True)
+        
+        pdf.set_font('helvetica', '', 9)
+        pdf.set_text_color(51, 65, 85)
+        strengths = res.get('key_strengths', [])
+        missing = res.get('missing_skills', [])
+        y_before = pdf.get_y()
+        for s in (strengths if strengths else ['No specific strengths identified.']):
+            pdf.cell(95, 6, safe_text(f'* {s}'), ln=True)
+        y_after_s = pdf.get_y()
+        pdf.set_y(y_before)
+        for m in (missing if missing else ['Meets core skill requirements.']):
+            pdf.set_x(105)
+            pdf.cell(95, 6, safe_text(f'* {m}'), ln=True)
+        pdf.set_y(max(y_after_s, pdf.get_y()) + 10)
+
+        if res.get('suggested_role') and res.get('suggested_role') != 'None':
+            pdf.set_font('helvetica', 'B', 12)
+            pdf.set_text_color(79, 70, 229)
+            pdf.cell(0, 10, 'Intelligent Role Placement Recommendation', ln=True)
+            pdf.set_font('helvetica', 'B', 10)
+            pdf.set_text_color(30, 41, 59)
+            pdf.cell(0, 6, safe_text(f'Recommended Fit: {res.get("suggested_role")}'), ln=True)
+            pdf.set_font('helvetica', 'I', 9)
+            pdf.set_text_color(100, 116, 139)
+            pdf.multi_cell(0, 5, safe_text(f'"{res.get("suggestion_reason")}"'))
+
+        import io
+        
+        # Final output handling - use BytesIO for robust Flask transmission
+        pdf_buffer = io.BytesIO(pdf.output())
+        pdf_buffer.seek(0)
+        
+        safe_filename = doc.get("candidate_name", "Anonymous").replace('"', "'")
+        
+        return send_file(
+            pdf_buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f"Evaluation_Report_{safe_filename}.pdf"
+        )
+    except Exception as e:
+        import traceback
+        app.logger.error(f"PDF GENERATION ERROR: {traceback.format_exc()}")
+        return jsonify({"error": str(e), "details": "PDF construction failed."}), 500
 
 @app.route('/results/<id>', methods=['DELETE'])
 def delete_result(id):

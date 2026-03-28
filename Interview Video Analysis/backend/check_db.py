@@ -1,22 +1,21 @@
-from database import get_db
-from bson import ObjectId
+import requests
 import json
 
-db = get_db()
-if db:
-    print("Checking last 5 results...")
-    results = list(db.results.find().sort("_id", -1).limit(5))
-    for r in results:
-        print(f"ID: {r['_id']}")
-        print(f"Name: {r.get('candidate_name')}")
-        print(f"Role: {r.get('selected_role')}")
-        print(f"Has resume_profile: {'resume_profile' in r}")
-        if 'resume_profile' in r:
-            # Print keys in resume_profile
-            print(f"Resume Profile Keys: {list(r['resume_profile'].keys())}")
-            # Print scores
-            rp = r['resume_profile']
-            print(f"Scores: Match={rp.get('role_match_score')}, Tech={rp.get('technical_score')}, Comm={rp.get('communication_score')}")
-        print("-" * 20)
-else:
-    print("Could not connect to DB")
+try:
+    r = requests.get("http://localhost:5000/results")
+    if r.status_code == 200:
+        data = r.json()
+        results = data.get("results", [])
+        print(f"Total candidates: {len(results)}")
+        for c in results:
+            print(f"ID: {c.get('_id')}")
+            print(f"Name: {c.get('candidate_name')}")
+            print(f"Role: {c.get('selected_role')}")
+            res = c.get('resume_profile', {})
+            print(f"Resume Status: {res.get('status', 'MISSING')}")
+            print(f"Scores: Tech={res.get('technical_score')}, Overall={res.get('overall_fit_score')}")
+            print("-" * 20)
+    else:
+        print(f"API Error: {r.status_code}")
+except Exception as e:
+    print(f"Error: {e}")

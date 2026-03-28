@@ -510,16 +510,8 @@
 
                                 <div class="space-y-4">
                                     <div class="mb-4">
-                                        <label class="form-label small fw-bold text-dim" style="font-size:0.65rem;">FULL
-                                            NAME</label>
-                                        <input type="text" id="dash-cand-name"
-                                            class="form-control form-control-lg rounded-4 border-2"
-                                            style="background:var(--bg-base); font-size: small;"
-                                            placeholder="e.g. Santhosh Kumar">
-                                    </div>
-                                    <div class="mb-4">
                                         <label class="form-label small fw-bold text-dim uppercase tracking-widest"
-                                            style="font-size:0.65rem;">Job Role Selection</label>
+                                            style="font-size:0.65rem;">JOB ROLE SELECTION</label>
                                         <select id="dash-cand-role"
                                             class="form-select form-select-lg rounded-4 border-2"
                                             style="background:var(--bg-base); font-weight:600; color:var(--text-bright);font-size: small;">
@@ -532,22 +524,17 @@
                                             <option value="Finance & Accounting Jobs">Finance & Accounting Jobs</option>
                                         </select>
                                     </div>
-
                                     <div class="mb-4">
-                                        <label class="form-label small fw-bold text-dim">RESUME (PDF / DOCX)</label>
-                                        <div class="p-4 border-2 border-dashed rounded-4 text-center"
-                                            style="background:var(--bg-base); border-color:var(--border-accent);">
-                                            <input type="file" id="dash-cand-resume" accept=".pdf,.docx" hidden
-                                                onchange="updateFileName('dash-resume-name', this)">
-                                            <button class="btn btn-outline-primary btn-sm rounded-pill px-4 mb-2"
-                                                onclick="document.getElementById('dash-cand-resume').click()">Select
-                                                Document</button>
-                                            <div id="dash-resume-name" class="small fw-bold text-primary"></div>
-                                        </div>
+                                        <label class="form-label small fw-bold text-dim" style="font-size:0.65rem;">FULL
+                                            NAME</label>
+                                        <input type="text" id="dash-cand-name"
+                                            class="form-control form-control-lg rounded-4 border-2"
+                                            style="background:var(--bg-base); font-size: small;"
+                                            placeholder="e.g. Santhosh Kumar">
                                     </div>
-
                                     <div class="mb-4">
-                                        <label class="form-label small fw-bold text-dim">PROFILE PHOTO
+                                        <label class="form-label small fw-bold text-dim"
+                                            style="font-size:0.65rem;">PROFILE PHOTO
                                             (Optional)</label>
                                         <div class="p-3 border-2 border-dashed rounded-4 text-center d-flex align-items-center gap-3"
                                             style="background:var(--bg-base); border-color:var(--border-accent);">
@@ -568,7 +555,22 @@
                                     </div>
 
                                     <div class="mb-4">
-                                        <label class="form-label small fw-bold text-dim">INTERVIEW MEDIA (MP4)</label>
+                                        <label class="form-label small fw-bold text-dim"
+                                            style="font-size:0.65rem;">RESUME (PDF / DOCX)</label>
+                                        <div class="p-4 border-2 border-dashed rounded-4 text-center"
+                                            style="background:var(--bg-base); border-color:var(--border-accent);">
+                                            <input type="file" id="dash-cand-resume" accept=".pdf,.docx" hidden
+                                                onchange="updateFileName('dash-resume-name', this)">
+                                            <button class="btn btn-outline-primary btn-sm rounded-pill px-4 mb-2"
+                                                onclick="document.getElementById('dash-cand-resume').click()">Select
+                                                Document</button>
+                                            <div id="dash-resume-name" class="small fw-bold text-primary"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <label class="form-label small fw-bold text-dim"
+                                            style="font-size:0.65rem;">INTERVIEW MEDIA (MP4)</label>
                                         <div class="p-4 border-2 border-dashed rounded-4 text-center"
                                             style="background:var(--bg-base); border-color:var(--border-accent);">
                                             <input type="file" id="dash-cand-video" accept="video/*" hidden
