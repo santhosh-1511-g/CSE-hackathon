@@ -116,28 +116,8 @@ def extract_text_from_pdf(file_bytes):
         print(f"PDF Extraction Error: {e}")
         return ""
 
-# --- Role-Based Benchmarks ---
-ROLE_BENCHMARKS = {
-    "IT / Software Jobs": {
-        "Skills": ['python', 'java', 'c++', 'javascript', 'react', 'django', 'flask', 'nodejs', 'mongodb', 'docker', 'aws', 'git', 'sql', 'machine learning', 'data structures', 'algorithms'],
-        "Projects": ['software', 'app', 'system', 'web', 'tool', 'github', 'coding', 'development']
-    },
-    "Corporate / Management Roles": {
-        "Skills": ['leadership', 'management', 'project management', 'communication', 'decision making', 'strategy', 'operations', 'stakeholder', 'team building', 'presentation'],
-        "Projects": ['project', 'team', 'managed', 'led', 'coordinated', 'handling', 'operations']
-    },
-    "Sales & Marketing Jobs": {
-        "Skills": ['sales', 'marketing', 'persuasion', 'communication', 'negotiation', 'digital marketing', 'seo', 'content strategy', 'advertising', 'crm', 'leads', 'revenue'],
-        "Projects": ['campaign', 'marketing', 'sales', 'growth', 'market research', 'branding']
-    },
-    "Core / Technical Jobs (Non-IT)": {
-        "Skills": ['mechanical', 'civil', 'electrical', 'autocad', 'design', 'manufacturing', 'site', 'field work', 'thermodynamics', 'structural', 'analysis', 'machinery'],
-        "Projects": ['core', 'technical', 'field', 'infrastructure', 'design', 'machinery', 'plant']
-    },
-    "Finance & Accounting Jobs": {
-        "Skills": ['accounting', 'finance', 'excel', 'tally', 'auditing', 'taxation', 'financial analysis', 'banking', 'investment', 'ledger', 'balance sheet', 'gst'],
-        "Projects": ['finance', 'financial', 'audit', 'accounts', 'tax', 'portfolio']
-    }
+# --- Support for Profile Pic Extraction ---
+
 def extract_profile_pic_from_pdf(file_bytes):
     """Try to extract the largest image from the first page of a PDF (likely a profile photo)."""
     try:
@@ -148,14 +128,11 @@ def extract_profile_pic_from_pdf(file_bytes):
             images = page.images
             if not images:
                 return None
-            # Find the largest image by area (width * height)
             best = max(images, key=lambda img: (img.get('width', 0) or 0) * (img.get('height', 0) or 0))
-            # Check if image is reasonable size for a headshot (at least 30x30 px)
             w = best.get('width', 0) or 0
             h = best.get('height', 0) or 0
             if w < 30 or h < 30:
                 return None
-            # Extract the image data from the page
             x0 = best.get('x0', 0)
             top = best.get('top', 0)
             x1 = best.get('x1', x0 + w)
@@ -171,55 +148,70 @@ def extract_profile_pic_from_pdf(file_bytes):
         print(f"Profile Pic Extraction Error: {e}")
         return None
 
-# --- Strict Validation Logic ---
-CAT_KEYWORDS = {
-    "Skills": ['python', 'java', 'c++', 'javascript', 'html', 'css', 'sql', 'react', 'django', 'flask', 'nodejs', 'mongodb', 'docker', 'aws', 'git', 'linux', 'machine learning'],
-    "Projects": ['project', 'app', 'system', 'platform', 'website', 'tool', 'bot', 'chatbot', 'github.com'],
-    "Workshops/Trainings": ['workshop', 'training', 'seminar', 'bootcamp', 'webinar', 'certification course'],
-    "Certifications": ['certification', 'certified', 'license', 'nptel', 'coursera', 'udemy', 'hackerrank', 'microsoft certified', 'aws certified'],
-    "Internships": ['internship', 'intern', 'trainee', 'summer intern'],
-    "Work Experience": ['job', 'experience', 'worked at', 'employment', 'senior', 'junior', 'developer at', 'engineer at']
-}
-
+# --- Strict Validation Logic Constants ---
 CERT_ORGS = ['nptel', 'coursera', 'udemy', 'hackerrank', 'microsoft', 'google', 'aws', 'cisco', 'oracle', 'linkedin', 'edx', 'simplilearn']
 CERT_KEYS = ['certified', 'certificate', 'course', 'completed', 'issued by', 'license', 'certification']
 ROLE_INDICATORS = ['developer', 'engineer', 'intern', 'analyst', 'manager', 'lead', 'trainee', 'architect', 'specialist', 'associate', 'consultant']
 DURATION_PATTERN = r'(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|20\d{2}|present|months|years)'
 
+# --- Role-Based Benchmarks (STRICT HR REQUIREMENTS) ---
+ROLE_BENCHMARKS = {
+    "Corporate / Management Roles": {
+        "Skills": ['leadership', 'team management', 'decision making', 'strategic thinking', 'problem-solving', 'time management', 'communication', 'excel', 'powerpoint', 'jira', 'trello'],
+        "Traits": ['goal-oriented', 'people-focused']
+    },
+    "Sales & Marketing Jobs": {
+        "Skills": ['persuasion', 'negotiation', 'customer handling', 'crm', 'seo', 'social media', 'ads', 'communication', 'storytelling'],
+        "Traits": ['energetic', 'confident', 'creative']
+    },
+    "Core / Technical Jobs (Non-IT)": {
+        "Skills": ['mechanical', 'civil', 'electrical', 'autocad', 'solidworks', 'matlab', 'site work', 'machine handling'],
+        "Traits": ['problem solving', 'analytical thinking']
+    },
+    "Finance & Accounting Jobs": {
+        "Skills": ['tally', 'gst', 'taxation', 'excel', 'financial analysis', 'p&l', 'balance sheet'],
+        "Traits": ['accuracy', 'integrity', 'patience']
+    },
+    "IT / Software Jobs": { # Keeping as legacy fallback
+        "Skills": ['python', 'java', 'c++', 'javascript', 'react', 'django', 'flask', 'nodejs', 'mongodb', 'docker', 'aws', 'git', 'sql', 'machine learning'],
+        "Traits": []
+    }
+}
+
+COMPANY_INDICATORS = [
+    'pvt ltd', 'ltd', 'corp', 'inc', 'solutions', 'services', 'technologies', 'software',
+    'bank', 'college', 'university', 'institute', 'limited', 'industries', 'group', 'pvt.', 'systems'
+]
+
+def find_company_names(text_lines):
+    """Identify lines that likely contain a company name based on suffixes."""
+    companies = []
+    for line in text_lines:
+        l_low = line.lower()
+        if any(ind in l_low for ind in COMPANY_INDICATORS):
+            # Strict: Not a home address (Nagar, Road, Street)
+            if not any(noise in l_low for noise in ['nagar', 'road', 'street', 'colony', 'apartment', 'house no']):
+                companies.append(line.strip())
+    return companies
+
 def calculate_communication_score(text):
     """Heuristic logic for Communication Skill Evaluation (0-100%)."""
-    score = 65  # Base (Good starting point)
+    score = 65  
     t_lower = text.lower()
-    
-    # 1. Structure (Bullet points/formatting)
     bullets = len(re.findall(r'^[•\-\*]\s+', text, re.MULTILINE))
     if bullets > 4: score += 10
-    
-    # 2. Professional Wording (Active Verbs)
     pro_verbs = ['achieved', 'developed', 'managed', 'led', 'optimized', 'implemented', 'designed', 'coordinated', 'mentored']
     found_verbs = [v for v in pro_verbs if v in t_lower]
     score += min(len(found_verbs) * 2, 15)
-    
-    # 3. Clarity (Sentence Length Heuristic)
     lines = [l for l in text.split('\n') if len(l.strip()) > 10]
     if lines:
         avg_words = sum(len(l.split()) for l in lines) / len(lines)
-        if avg_words < 18: score += 10 # Good conciseness
-        elif avg_words > 30: score -= 10 # Possible run-on sentences
-    
-    # 4. Professional Tone (Capitalization/Structure)
-    # Check if lines start with uppercase
-    up_lines = [l for l in lines if l[0].isupper()]
-    if len(up_lines) / len(lines) > 0.7: score += 5
-    
-    # 5. Grammar Red Flags (Simple Heuristic)
-    if ' i ' in text: score -= 5 # Informal case misuse
-    
+        if avg_words < 18: score += 10
+        elif avg_words > 30: score -= 10
     return max(0, min(100, score))
 
-def extract_resume_metadata(file_stream, selected_role="IT / Software Jobs") -> dict:
+def extract_resume_metadata(file_stream, selected_role="Corporate / Management Roles") -> dict:
     """Advanced & Strict Role-Based HR Resume Analyzer AI."""
-    # Read file content
     try:
         file_bytes = file_stream.read()
     except AttributeError:
@@ -229,122 +221,111 @@ def extract_resume_metadata(file_stream, selected_role="IT / Software Jobs") -> 
     text = extract_text_from_pdf(file_bytes)
     if not text.strip():
         text = extract_text_from_docx(file_bytes)
-    
     if not text.strip():
         return {"error": "Could not extract text from file.", "name": "Unknown"}
 
     t_lower = _text_lower(text)
     lines = [line.strip() for line in text.split('\n') if line.strip()]
-    report_data = {}
     
-    # Get rolebenchmarks (default to IT if not found)
+    # 1. Role Match Logic
     benchmarks = ROLE_BENCHMARKS.get(selected_role, ROLE_BENCHMARKS["IT / Software Jobs"])
+    req_skills = benchmarks.get("Skills", [])
+    found_required = [s for s in req_skills if s.lower() in t_lower]
+    missing_required = [s for s in req_skills if s.lower() not in t_lower]
     
-    # 1. Skills (Filtered by Role Relevance)
-    skills_found = [s for s in benchmarks["Skills"] if s in t_lower]
-    report_data["Skills"] = {"status": "FOUND" if skills_found else "NOT FOUND", "details": ", ".join(skills_found[:10]) if skills_found else "None"}
-
-    # 2. Projects (Role Relevance + content validation)
-    projects_found = []
+    # Validation Rules (STRICT)
+    # Work Experience = FOUND only if: company name + role OR duration
+    companies = find_company_names(lines)
+    work_exp_found = False
+    valid_exp_lines = []
+    
     for line in lines:
-        if any(k in line.lower() for k in benchmarks["Projects"]) and len(line) > 12:
-            projects_found.append(line)
-    report_data["Projects"] = {"status": "FOUND" if projects_found else "NOT FOUND", "details": ", ".join([p[:45].strip() + "..." for p in projects_found[:3]]) if projects_found else "None"}
-
-    # 3. Workshops (General check)
-    w_keys = ['workshop', 'training', 'seminar', 'bootcamp', 'webinar', 'certification course']
-    workshops_found = [line for line in lines if any(k in line.lower() for k in w_keys) and len(line) > 10]
-    report_data["Workshops/Trainings"] = {"status": "FOUND" if workshops_found else "NOT FOUND", "details": ", ".join(workshops_found[:2]) if workshops_found else "None"}
-
-    # 4. Certifications (STRICT: Key + Valid Org)
+        l_low = line.lower()
+        # Check if line contains a company we identified
+        is_company_line = any(comp.lower() in l_low for comp in companies)
+        has_role = any(r in l_low for r in ROLE_INDICATORS)
+        has_dur = bool(re.search(DURATION_PATTERN, l_low))
+        
+        if is_company_line and (has_role or has_dur):
+            work_exp_found = True
+            valid_exp_lines.append(line)
+    
+    # Certifications = FOUND only if: certification keyword + valid organization
     certs_found = []
     for line in lines:
         l_low = line.lower()
-        has_key = any(k in l_low for k in CERT_KEYS)
-        has_org = any(o in l_low for o in CERT_ORGS)
-        if has_key and has_org:
+        if any(k in l_low for k in CERT_KEYS) and any(o in l_low for o in CERT_ORGS):
             certs_found.append(line)
-    report_data["Certifications"] = {"status": "FOUND" if certs_found else "NOT FOUND", "details": ", ".join(certs_found[:2]) if certs_found else "None"}
 
-    # 5. Internships (STRICT: Key + Role/Duration)
-    interns_found = []
-    for line in lines:
-        l_low = line.lower()
-        if 'intern' in l_low:
-            has_role = any(r in l_low for r in ROLE_INDICATORS)
-            has_dur = bool(re.search(DURATION_PATTERN, l_low))
-            if has_role or has_dur:
-                interns_found.append(line)
-    report_data["Internships"] = {"status": "FOUND" if interns_found else "NOT FOUND", "details": ", ".join(interns_found[:2]) if interns_found else "None"}
-
-    # 6. Work Experience (STRICT: Not an address, must have role/position + duration)
-    work_found = []
-    for line in lines:
-        l_low = line.lower()
-        if any(noise in l_low for noise in ['street', 'road', 'nagar', 'colony', 'apartment', 'house no']): 
-            continue
-        has_exp_key = any(k in l_low for k in ['experience', 'worked at', 'employment', 'developer at', 'engineer at'])
-        has_role = any(r in l_low for r in ROLE_INDICATORS)
-        has_dur = bool(re.search(DURATION_PATTERN, l_low))
-        if (has_exp_key and (has_role or has_dur)) or (has_role and has_dur):
-            work_found.append(line)
-    report_data["Work Experience"] = {"status": "FOUND" if work_found else "NOT FOUND", "details": ", ".join(work_found[:2]) if work_found else "None"}
-
-    # Communication Skill Logic
-    comm_percent = calculate_communication_score(text)
+    # 2. Scoring System
+    # Role Match Score (0-100%): Skills + Traits keywords
+    match_total = len(req_skills)
+    match_score = (len(found_required) / match_total * 100) if match_total > 0 else 0
     
-    # --- Role Fit & Selection Logic ---
-    # Role Fit Score (0-10) based on skills and projects
-    skill_score = (len(skills_found) / 5) * 5  # Max 5 points for skills
-    proj_score = (len(projects_found) / 2) * 5  # Max 5 points for projects
-    role_fit_score = min(10, round(skill_score + proj_score, 1))
-
-    # Overall Resume Score (0-10) based on category presence
-    found_categories = 0
-    for cat in ["Skills", "Projects", "Workshops/Trainings", "Certifications", "Internships", "Work Experience"]:
-        if report_data[cat]["status"] == "FOUND": found_categories += 1
-    resume_score = round((found_categories / 6) * 10, 1)
-
-    # Final Decision Status
-    # Criteria: Role Fit > 6 AND (Skills FOUND OR Experience FOUND) AND Communication > 50
-    is_selected = (role_fit_score >= 6) and (len(skills_found) > 0 or len(work_found) > 0) and (comm_percent >= 50)
-    status = "SELECTED" if is_selected else "NOT SELECTED"
+    # Technical/Domain Score (0-100%): Presence of specific technical keywords
+    tech_score = 40 if work_exp_found else 10
+    tech_score += min(len(found_required) * 10, 60) # Max 60 from skills
     
-    # Reason Generator
-    if is_selected:
-        reason = f"Candidate matches {len(skills_found)} role-specific skills with a strong {role_fit_score}/10 Fit Index. "
-        reason += f"Communication quality ({comm_percent}%) meets professional standards."
+    # Communication Score (0-100%)
+    comm_score = calculate_communication_score(text)
+    
+    # Overall Fit Score
+    overall_fit = (match_score * 0.4) + (tech_score * 0.4) + (comm_score * 0.2)
+    overall_fit = min(100, round(overall_fit, 1))
+    
+    # Final Decision
+    final_decision = "SELECTED" if overall_fit >= 60 else "NOT SELECTED"
+    
+    # Identify Strengths
+    strengths = []
+    if match_score > 70: strengths.append(f"Strong alignment with {selected_role} requirements")
+    if work_exp_found: strengths.append("Verified professional work history")
+    if comm_score > 80: strengths.append("Excellent professional communication & documentation")
+    if certs_found: strengths.append(f"Holding {len(certs_found)} industry-recognized certifications")
+    
+    # Intelligent Role Suggestion
+    suggested_role = "None"
+    suggestion_reason = "No better matching role identified."
+    
+    if final_decision == "NOT SELECTED":
+        best_alt_score = 0
+        for role, data in ROLE_BENCHMARKS.items():
+            if role == selected_role: continue
+            alt_found = [s for s in data["Skills"] if s.lower() in t_lower]
+            alt_score = (len(alt_found) / len(data["Skills"]) * 100) if data["Skills"] else 0
+            if alt_score > best_alt_score and alt_score > 40:
+                best_alt_score = alt_score
+                suggested_role = role
+                suggestion_reason = f"Candidate shows higher technical alignment ({round(alt_score)}%) with {role} skillset."
+
+    reason = f"Candidate match with {selected_role} is {round(overall_fit)}%. "
+    if final_decision == "NOT SELECTED":
+        reason += f"Missing critical skills: {', '.join(missing_required[:3])}."
     else:
-        if role_fit_score < 6:
-            reason = f"Low role alignment ({role_fit_score}/10). Resume lacks sufficient keywords relevant to {selected_role}."
-        elif comm_percent < 50:
-            reason = "Communication quality score is below the required 50% threshold for professional intake."
-        else:
-            reason = "Candidate lacks either verified skills or professional experience in the selected domain."
+        reason += f"Demonstrates core competencies in {', '.join(found_required[:3])}."
 
-    return {
-        "name": "Candidate Profile", # Placeholder, name extraction could be added if needed
-        "selected_role": selected_role,
-        "completeness_score": resume_score, # Mapping old key for compatibility
-        "resume_score": resume_score,
-        "role_fit_score": role_fit_score,
-        "communication_skills": comm_percent,
-        "selection_status": status,
-        "selection_reason": reason,
-        "report_data": report_data,
-        "raw_text": text[:500] + "..."
+    report_data = {
+        "Skills": {"status": "FOUND" if found_required else "NOT FOUND", "details": ", ".join(found_required[:10])},
+        "Work Experience": {"status": "FOUND" if work_exp_found else "NOT FOUND", "details": ", ".join(valid_exp_lines[:2])},
+        "Certifications": {"status": "FOUND" if certs_found else "NOT FOUND", "details": ", ".join(certs_found[:2])},
+        "Internships": {"status": "FOUND" if any('intern' in l.lower() for l in lines) else "NOT FOUND", "details": "Found in records" if any('intern' in l.lower() for l in lines) else "None"}
     }
 
     return {
         "name": lines[0][:30] if lines else "Candidate",
         "profile_pic": profile_pic,
-        "resume_score": int(completeness_score * 10),
-        "completeness_score": completeness_score,
-        "communication_skills": comm_percent,
-        "formatted_report": formatted_report,
-        "evaluation_data": report_data,
-        "top_5_technical_skills": skills_found[:5],
-        "strengths": ["Clear communication profile" if comm_percent > 80 else "Strong technical alignment"],
-        "weaknesses": ["Improve resume detail structure" if comm_percent < 60 else "N/A"],
-        "recommendation": "Strong Hire" if (completeness_score >= 8 and comm_percent >= 75) else "Consider" if completeness_score >= 5 else "Reject"
+        "selected_role": selected_role,
+        "role_match_score": round(match_score, 1),
+        "technical_score": round(tech_score, 1),
+        "communication_score": round(comm_score, 1),
+        "overall_fit_score": overall_fit,
+        "key_strengths": strengths if strengths else ["Basic technical awareness"],
+        "missing_skills": missing_required[:5],
+        "status": final_decision,
+        "reason": reason,
+        "suggested_role": suggested_role,
+        "suggestion_reason": suggestion_reason,
+        "report_data": report_data,
+        "top_5_technical_skills": found_required[:5],
+        "resume_score": overall_fit # For compatibility with UI gauges
     }
